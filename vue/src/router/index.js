@@ -13,6 +13,12 @@ const publicRoutes = [
 // 教师路由
 const teacherRoutes = [
   {
+    path: '/teacher/info',
+    name: 'TeacherInfo',
+    component: () => import('@/views/teacher/MyInfo.vue'),
+    meta: { title: '个人信息', role: 'teacher' }
+  },
+  {
     path: '/teacher/students',
     name: 'TeacherStudents',
     component: () => import('@/views/teacher/StudentManage.vue'),

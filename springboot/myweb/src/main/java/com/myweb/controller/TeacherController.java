@@ -2,7 +2,10 @@ package com.myweb.controller;
 
 import com.myweb.common.Result;
 import com.myweb.dto.PasswordDTO;
+import com.myweb.entity.Major;
 import com.myweb.entity.Teacher;
+import com.myweb.service.CollegeService;
+import com.myweb.service.MajorService;
 import com.myweb.service.TeacherService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,12 @@ public class TeacherController {
     
     @Autowired
     private TeacherService teacherService;
+    
+    @Autowired
+    private MajorService majorService;
+    
+    @Autowired
+    private CollegeService collegeService;
     
     /**
      * 获取所有教师列表
@@ -77,6 +86,17 @@ public class TeacherController {
         Teacher teacher = teacherService.getById(userId);
         if (teacher != null) {
             teacher.setPassword(null);
+            // 关联查询专业和学院信息
+            if (teacher.getMajorId() != null) {
+                Major major = majorService.getById(teacher.getMajorId());
+                if (major != null) {
+                    // 关联查询学院信息
+                    if (major.getCollegeId() != null) {
+                        major.setCollege(collegeService.getById(major.getCollegeId()));
+                    }
+                    teacher.setMajor(major);
+                }
+            }
         }
         return Result.success(teacher);
     }

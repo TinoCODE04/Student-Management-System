@@ -97,36 +97,66 @@ import {
 import { useUserStore } from '@/stores/counter'
 import { logout } from '@/api/auth'
 
-// 导入头像图片
-import avatar1 from '@/assets/p1.jpeg'
-import avatar2 from '@/assets/p2.png'
-import avatar3 from '@/assets/p3.jpg'
-import avatar4 from '@/assets/p4.jpg'
-import avatar5 from '@/assets/p5.jpg'
-import avatar6 from '@/assets/p6.jpg'
-import avatar7 from '@/assets/p7.jpg'
-import avatar8 from '@/assets/p8.jpg'
+// 导入头像图片 - 学生头像
+import stu_ava1 from '@/assets/p1.jpeg'
+import stu_ava2 from '@/assets/p2.png'
+import stu_ava3 from '@/assets/p3.jpg'
+import stu_ava4 from '@/assets/p4.jpg'
+import stu_ava5 from '@/assets/p5.jpg'
+import stu_ava6 from '@/assets/p6.jpg'
+import stu_ava7 from '@/assets/p7.jpg'
+import stu_ava8 from '@/assets/p8.jpg'
+// 导入头像图片 - 教师头像
+import t_ava1 from '@/assets/t1.png'
+import t_ava2 from '@/assets/t2.png'
+import t_ava3 from '@/assets/t3.png'
+import t_ava4 from '@/assets/t4.png'
+import t_ava5 from '@/assets/t5.png'
+import t_ava6 from '@/assets/t6.png'
 
 const router = useRouter()
 const userStore = useUserStore()
 
-// 头像映射
-const avatarMap = {
-  'p1.jpeg': avatar1,
-  'p2.png': avatar2,
-  'p3.jpg': avatar3,
-  'p4.jpg': avatar4,
-  'p5.jpg': avatar5,
-  'p6.jpg': avatar6,
-  'p7.jpg': avatar7,
-  'p8.jpg': avatar8
+// 头像映射 - 学生
+const studentAvatarMap = {
+  'p1.jpeg': stu_ava1,
+  'p2.png': stu_ava2,
+  'p3.jpg': stu_ava3,
+  'p4.jpg': stu_ava4,
+  'p5.jpg': stu_ava5,
+  'p6.jpg': stu_ava6,
+  'p7.jpg': stu_ava7,
+  'p8.jpg': stu_ava8
+}
+
+// 头像映射 - 教师（根据教师ID分配头像）
+const teacherAvatarMap = {
+  1: t_ava1,
+  2: t_ava2,
+  3: t_ava3,
+  4: t_ava4,
+  5: t_ava5,
+  6: t_ava6
 }
 
 // 计算用户头像
 const userAvatar = computed(() => {
+  // 教师使用教师头像
+  if (userStore.isTeacher) {
+    const teacherId = userStore.userInfo.userId
+    if (teacherId && teacherAvatarMap[teacherId]) {
+      return teacherAvatarMap[teacherId]
+    }
+    // 如果教师ID超过6，循环使用头像
+    if (teacherId) {
+      const index = ((teacherId - 1) % 6) + 1
+      return teacherAvatarMap[index]
+    }
+  }
+  // 学生使用学生头像
   const avatar = userStore.userInfo.avatar
-  if (avatar && avatarMap[avatar]) {
-    return avatarMap[avatar]
+  if (avatar && studentAvatarMap[avatar]) {
+    return studentAvatarMap[avatar]
   }
   return null
 })

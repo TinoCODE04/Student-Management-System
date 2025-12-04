@@ -1,8 +1,7 @@
 # Root level files to ignore (keep only project folders)
-mysql脚本.txt
-prompt.txt
-structure.txt
-POSTMAN_API_TEST.md
+*.txt
+*.md
+!README.md
 
 # IDE
 .idea/

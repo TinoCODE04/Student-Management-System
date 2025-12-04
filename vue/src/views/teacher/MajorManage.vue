@@ -27,7 +27,7 @@
         <div class="stat-icon">🏫</div>
         <div class="stat-info">
           <div class="stat-value">{{ collegeList.length }}</div>
-          <div class="stat-label">覆盖学院</div>
+          <div class="stat-label">包含学院</div>
         </div>
       </div>
     </div>
@@ -41,6 +41,7 @@
           </span>
           <div class="header-actions">
             <el-select v-model="selectedCollegeId" placeholder="按学院筛选" clearable style="width: 200px; margin-right: 12px;">
+              <el-option label="全部学院" :value="null" />
               <el-option v-for="c in collegeList" :key="c.id" :label="c.collegeName" :value="c.id" />
             </el-select>
             <el-button type="primary" @click="handleAdd">
@@ -51,47 +52,33 @@
       </template>
       
       <el-table :data="filteredData" v-loading="loading" stripe border
-                :header-cell-style="{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff', fontWeight: 'bold' }">
-        <el-table-column prop="id" label="ID" width="80" align="center" />
-        <el-table-column prop="majorName" label="专业名称" min-width="160">
+                :header-cell-style="{ background: '#CCCCFF', color: '#606266', fontWeight: 'bold' }">
+        <el-table-column type="index" label="序号" width="70" align="center" />
+        <el-table-column prop="majorName" label="专业名称" min-width="160" />
+        <el-table-column prop="departmentName" label="所属系" min-width="140">
           <template #default="{ row }">
-            <div class="major-name">
-              <el-icon class="major-icon"><Notebook /></el-icon>
-              <span>{{ row.majorName }}</span>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="departmentName" label="系名" min-width="140">
-          <template #default="{ row }">
-            <el-tag type="info" effect="plain">{{ row.departmentName || '-' }}</el-tag>
+            {{ row.departmentName || '-' }}
           </template>
         </el-table-column>
         <el-table-column label="所属学院" min-width="160">
           <template #default="{ row }">
-            <div class="college-info">
-              <el-icon class="college-icon"><OfficeBuilding /></el-icon>
-              <span>{{ row.college?.collegeName || getCollegeName(row.collegeId) }}</span>
-            </div>
+            {{ row.college?.collegeName || getCollegeName(row.collegeId) || '-' }}
           </template>
         </el-table-column>
         <el-table-column label="学生人数" width="120" align="center">
           <template #default="{ row }">
-            <el-tag type="success">{{ row.studentCount || 0 }} 人</el-tag>
+            {{ row.studentCount || 0 }} 人
           </template>
         </el-table-column>
         <el-table-column label="教师人数" width="120" align="center">
           <template #default="{ row }">
-            <el-tag type="warning">{{ row.teacherCount || 0 }} 人</el-tag>
+            {{ row.teacherCount || 0 }} 人
           </template>
         </el-table-column>
         <el-table-column label="操作" width="180" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)">
-              <el-icon><Edit /></el-icon>编辑
-            </el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)">
-              <el-icon><Delete /></el-icon>删除
-            </el-button>
+            <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>

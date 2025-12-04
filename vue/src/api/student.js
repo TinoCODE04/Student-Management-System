@@ -35,9 +35,9 @@ export function addStudent(data) {
 }
 
 // 更新学生
-export function updateStudent(data) {
+export function updateStudent(id, data) {
   return request({
-    url: `/student/${data.id}`,
+    url: `/student/${id}`,
     method: 'put',
     data
   })

@@ -39,51 +39,46 @@
             <el-icon><School /></el-icon>
             学院管理
           </span>
-          <el-button type="primary" @click="handleAdd">
-            <el-icon><Plus /></el-icon>新增学院
-          </el-button>
+          <div class="header-actions">
+            <el-select v-model="selectedCollegeId" placeholder="按学院筛选" clearable style="width: 200px; margin-right: 12px;">
+              <el-option label="全部学院" :value="null" />
+              <el-option v-for="c in tableData" :key="c.id" :label="c.collegeName" :value="c.id" />
+            </el-select>
+            <el-button type="primary" @click="handleAdd">
+              <el-icon><Plus /></el-icon>新增学院
+            </el-button>
+          </div>
         </div>
       </template>
       
-      <el-table :data="tableData" v-loading="loading" stripe border 
-                :header-cell-style="{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff', fontWeight: 'bold' }">
-        <el-table-column prop="id" label="ID" width="80" align="center" />
-        <el-table-column prop="collegeName" label="学院名称" min-width="180">
+      <el-table :data="filteredData" v-loading="loading" stripe border 
+                :header-cell-style="{ background: '#CCCCFF', color: '#606266', fontWeight: 'bold' }">
+        <el-table-column type="index" label="序号" width="70" align="center" />
+        <el-table-column prop="collegeName" label="学院名称" min-width="180" />
+        <el-table-column prop="minCredit" label="毕业最低学分" width="140" align="center">
           <template #default="{ row }">
-            <div class="college-name">
-              <el-icon class="college-icon"><OfficeBuilding /></el-icon>
-              <span>{{ row.collegeName }}</span>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="minCredit" label="最低学分" width="120" align="center">
-          <template #default="{ row }">
-            <el-tag type="warning">{{ row.minCredit }} 学分</el-tag>
+            {{ row.minCredit }} 学分
           </template>
         </el-table-column>
         <el-table-column label="专业数量" width="120" align="center">
           <template #default="{ row }">
-            <el-tag type="primary">{{ row.majorCount || 0 }} 个</el-tag>
+            {{ row.majorCount || 0 }} 个
           </template>
         </el-table-column>
         <el-table-column label="学生人数" width="120" align="center">
           <template #default="{ row }">
-            <el-tag type="success">{{ row.studentCount || 0 }} 人</el-tag>
+            {{ row.studentCount || 0 }} 人
           </template>
         </el-table-column>
         <el-table-column label="课程数量" width="120" align="center">
           <template #default="{ row }">
-            <el-tag type="info">{{ row.courseCount || 0 }} 门</el-tag>
+            {{ row.courseCount || 0 }} 门
           </template>
         </el-table-column>
         <el-table-column label="操作" width="180" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)">
-              <el-icon><Edit /></el-icon>编辑
-            </el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)">
-              <el-icon><Delete /></el-icon>删除
-            </el-button>
+            <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -118,11 +113,18 @@ const dialogVisible = ref(false)
 const isEdit = ref(false)
 const formRef = ref(null)
 const submitLoading = ref(false)
+const selectedCollegeId = ref(null)
 
 // 统计数据
 const totalStudents = computed(() => tableData.value.reduce((sum, c) => sum + (c.studentCount || 0), 0))
 const totalMajors = computed(() => tableData.value.reduce((sum, c) => sum + (c.majorCount || 0), 0))
 const totalCourses = computed(() => tableData.value.reduce((sum, c) => sum + (c.courseCount || 0), 0))
+
+// 筛选数据
+const filteredData = computed(() => {
+  if (!selectedCollegeId.value) return tableData.value
+  return tableData.value.filter(c => c.id === selectedCollegeId.value)
+})
 
 const form = reactive({
   id: null,
@@ -270,6 +272,11 @@ onMounted(() => loadData())
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
 }
 
 .college-name {

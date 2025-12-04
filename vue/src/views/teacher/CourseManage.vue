@@ -1,39 +1,90 @@
 <template>
   <div class="course-manage">
-    <el-card>
-      <!-- 搜索区域 -->
-      <div class="search-area">
-        <el-form :inline="true" :model="queryForm" class="search-form">
-          <el-form-item label="课程名称">
-            <el-input v-model="queryForm.courseName" placeholder="请输入课程名称" clearable />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="handleSearch">
-              <el-icon><Search /></el-icon>查询
-            </el-button>
-            <el-button @click="handleReset">
-              <el-icon><Refresh /></el-icon>重置
-            </el-button>
-          </el-form-item>
-        </el-form>
-        <el-button type="success" @click="handleAdd">
-          <el-icon><Plus /></el-icon>新增课程
-        </el-button>
+    <!-- 统计卡片 -->
+    <div class="stats-row">
+      <div class="stat-card" style="--accent: #409eff;">
+        <div class="stat-icon">📚</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ total }}</div>
+          <div class="stat-label">课程总数</div>
+        </div>
       </div>
+      <div class="stat-card" style="--accent: #67c23a;">
+        <div class="stat-icon">👨‍🎓</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ totalSelectedCount }}</div>
+          <div class="stat-label">选课总人次</div>
+        </div>
+      </div>
+      <div class="stat-card" style="--accent: #e6a23c;">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ totalCredits }}</div>
+          <div class="stat-label">总学分</div>
+        </div>
+      </div>
+      <div class="stat-card" style="--accent: #f56c6c;">
+        <div class="stat-icon">🏫</div>
+        <div class="stat-info">
+          <div class="stat-value">{{ collegeList.length }}</div>
+          <div class="stat-label">开课学院</div>
+        </div>
+      </div>
+    </div>
+
+    <el-card class="table-card">
+      <template #header>
+        <div class="card-header">
+          <span class="header-title">
+            <el-icon><Reading /></el-icon>
+            课程管理
+          </span>
+          <div class="header-actions">
+            <el-input 
+              v-model="queryForm.courseName" 
+              placeholder="搜索课程名称" 
+              clearable 
+              style="width: 200px;"
+              @keyup.enter="handleSearch"
+            >
+              <template #prefix>
+                <el-icon><Search /></el-icon>
+              </template>
+            </el-input>
+            <el-select v-model="queryForm.collegeId" placeholder="全部学院" clearable style="width: 160px;" @change="handleSearch">
+              <el-option label="全部学院" :value="null" />
+              <el-option v-for="c in collegeList" :key="c.id" :label="c.collegeName" :value="c.id" />
+            </el-select>
+            <el-button type="primary" @click="handleSearch">查询</el-button>
+            <el-button @click="handleReset">重置</el-button>
+            <el-button type="success" @click="handleAdd">新增课程</el-button>
+          </div>
+        </div>
+      </template>
       
-      <!-- 表格区域 -->
-      <el-table :data="tableData" v-loading="loading" stripe border>
-        <el-table-column prop="courseName" label="课程名称" width="150" />
-        <el-table-column prop="credit" label="学分" width="80" />
-        <el-table-column prop="schedule" label="上课时段" width="150" />
-        <el-table-column prop="location" label="上课地点" width="120" />
-        <el-table-column label="选课情况" width="120">
+      <el-table :data="tableData" v-loading="loading" stripe border
+                :header-cell-style="{ background: '#CCCCFF', color: '#606266', fontWeight: 'bold' }">
+        <el-table-column type="index" label="序号" width="70" align="center" />
+        <el-table-column prop="courseName" label="课程名称" min-width="150" />
+        <el-table-column prop="credit" label="学分" width="80" align="center">
           <template #default="{ row }">
-            {{ row.selectedCount }} / {{ row.maxStudents }}
+            {{ row.credit }} 分
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="课程描述" min-width="200" show-overflow-tooltip />
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column prop="schedule" label="上课时段" width="140" />
+        <el-table-column prop="location" label="上课地点" width="120" />
+        <el-table-column label="选课情况" width="120" align="center">
+          <template #default="{ row }">
+            {{ row.selectedCount || 0 }} / {{ row.maxStudents }}
+          </template>
+        </el-table-column>
+        <el-table-column label="授课教师" width="100">
+          <template #default="{ row }">
+            {{ row.teacher?.name || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="description" label="课程描述" min-width="180" show-overflow-tooltip />
+        <el-table-column label="操作" width="150" fixed="right" align="center">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
             <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
@@ -62,24 +113,19 @@
       width="600px"
       :close-on-click-modal="false"
     >
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-width="100px"
-      >
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="课程名称" prop="courseName">
           <el-input v-model="form.courseName" placeholder="请输入课程名称" />
         </el-form-item>
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="学分" prop="credit">
-              <el-input-number v-model="form.credit" :min="1" :max="10" />
+              <el-input-number v-model="form.credit" :min="1" :max="10" style="width: 100%;" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="最大人数" prop="maxStudents">
-              <el-input-number v-model="form.maxStudents" :min="1" :max="500" />
+              <el-input-number v-model="form.maxStudents" :min="1" :max="500" style="width: 100%;" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -98,36 +144,21 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="所属学院" prop="collegeId">
-              <el-select v-model="form.collegeId" placeholder="请选择学院">
-                <el-option
-                  v-for="college in collegeList"
-                  :key="college.id"
-                  :label="college.collegeName"
-                  :value="college.id"
-                />
+              <el-select v-model="form.collegeId" placeholder="请选择学院" style="width: 100%;">
+                <el-option v-for="c in collegeList" :key="c.id" :label="c.collegeName" :value="c.id" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="授课教师" prop="teacherId">
-              <el-select v-model="form.teacherId" placeholder="请选择教师">
-                <el-option
-                  v-for="teacher in teacherList"
-                  :key="teacher.id"
-                  :label="teacher.name"
-                  :value="teacher.id"
-                />
+              <el-select v-model="form.teacherId" placeholder="请选择教师" style="width: 100%;">
+                <el-option v-for="t in teacherList" :key="t.id" :label="t.name" :value="t.id" />
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
         <el-form-item label="课程描述" prop="description">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入课程描述"
-          />
+          <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入课程描述" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -141,13 +172,14 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Refresh, Plus } from '@element-plus/icons-vue'
+import { Search, Reading } from '@element-plus/icons-vue'
 import { getCoursePage, addCourse, updateCourse, deleteCourse } from '@/api/course'
 import { getCollegeList } from '@/api/college'
 import { getTeacherList } from '@/api/teacher'
 
 const queryForm = reactive({
   courseName: '',
+  collegeId: null,
   pageNum: 1,
   pageSize: 10
 })
@@ -164,6 +196,10 @@ const formRef = ref(null)
 const submitLoading = ref(false)
 
 const dialogTitle = computed(() => isEdit.value ? '编辑课程' : '新增课程')
+
+// 统计数据
+const totalSelectedCount = computed(() => tableData.value.reduce((sum, c) => sum + (c.selectedCount || 0), 0))
+const totalCredits = computed(() => tableData.value.reduce((sum, c) => sum + (c.credit || 0), 0))
 
 const form = reactive({
   id: null,
@@ -221,6 +257,7 @@ const handleSearch = () => {
 
 const handleReset = () => {
   queryForm.courseName = ''
+  queryForm.collegeId = null
   queryForm.pageNum = 1
   loadData()
 }
@@ -299,23 +336,119 @@ onMounted(() => {
 
 <style scoped>
 .course-manage {
-  padding: 10px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+  min-height: calc(100vh - 120px);
 }
 
-.search-area {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
   margin-bottom: 20px;
 }
 
-.search-form {
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s, box-shadow 0.3s;
+  border-left: 4px solid var(--accent);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+  font-size: 36px;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 80%, white) 100%);
+  border-radius: 12px;
+}
+
+.stat-info {
   flex: 1;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+.table-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #303133;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .pagination {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table th) {
+  padding: 14px 0;
+}
+
+:deep(.el-table td) {
+  padding: 12px 0;
+}
+
+@media (max-width: 1200px) {
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

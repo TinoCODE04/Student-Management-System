@@ -61,23 +61,34 @@ public class CourseSelectionController {
     }
     
     /**
-     * 教师查看某课程的选课学生
+     * 教师查看某课程的选课学生（只能查看自己授课的课程）
      */
     @GetMapping("/course/{courseId}")
     public Result<List<CourseSelection>> getCourseSelections(@PathVariable Long courseId,
+                                                              @RequestAttribute("userId") Long userId,
                                                               @RequestAttribute("role") String role) {
         if (!"teacher".equals(role)) {
             return Result.forbidden("此接口仅供教师使用");
         }
         
+        // 验证该课程是否属于当前教师
+        Course course = courseService.getById(courseId);
+        if (course == null) {
+            return Result.error("课程不存在");
+        }
+        if (!userId.equals(course.getTeacherId())) {
+            return Result.forbidden("您只能查看自己授课的课程");
+        }
+        
         List<CourseSelection> selections = courseSelectionService.listByCourseId(courseId);
-        // 填充学生信息
+        // 填充学生信息和课程信息
         for (CourseSelection selection : selections) {
             Student student = studentService.getById(selection.getStudentId());
             if (student != null) {
                 student.setPassword(null);
             }
             selection.setStudent(student);
+            selection.setCourse(course);
         }
         return Result.success(selections);
     }
@@ -137,10 +148,11 @@ public class CourseSelectionController {
     }
     
     /**
-     * 教师录入成绩
+     * 教师录入成绩（只能录入自己授课课程的成绩）
      */
     @PostMapping("/score")
     public Result<Void> updateScore(@RequestBody Map<String, Object> params,
+                                    @RequestAttribute("userId") Long userId,
                                     @RequestAttribute("role") String role) {
         if (!"teacher".equals(role)) {
             return Result.forbidden("此接口仅供教师使用");
@@ -149,6 +161,15 @@ public class CourseSelectionController {
         Long studentId = Long.valueOf(params.get("studentId").toString());
         Long courseId = Long.valueOf(params.get("courseId").toString());
         Double score = Double.valueOf(params.get("score").toString());
+        
+        // 验证该课程是否属于当前教师
+        Course course = courseService.getById(courseId);
+        if (course == null) {
+            return Result.error("课程不存在");
+        }
+        if (!userId.equals(course.getTeacherId())) {
+            return Result.forbidden("您只能录入自己授课课程的成绩");
+        }
         
         boolean success = courseSelectionService.updateScore(studentId, courseId, score);
         if (!success) {

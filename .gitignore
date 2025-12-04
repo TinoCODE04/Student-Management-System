@@ -1,0 +1,32 @@
+# Root level files to ignore (keep only project folders)
+mysql脚本.txt
+prompt.txt
+structure.txt
+POSTMAN_API_TEST.md
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Java / Spring Boot
+springboot/myweb/target/
+*.class
+*.jar
+*.war
+*.log
+
+# Vue / Node
+vue/node_modules/
+vue/dist/
+vue/.env.local
+vue/.env.*.local
+*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

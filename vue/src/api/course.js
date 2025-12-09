@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 分页查询课程
 export function getCoursePage(params) {
   return request({
-    url: '/course/page',
+    url: '/courses/page',
     method: 'get',
     params
   })
@@ -12,7 +12,7 @@ export function getCoursePage(params) {
 // 获取课程列表
 export function getCourseList() {
   return request({
-    url: '/course/list',
+    url: '/courses/list',
     method: 'get'
   })
 }
@@ -20,7 +20,7 @@ export function getCourseList() {
 // 获取当前教师的课程列表
 export function getTeacherCourses() {
   return request({
-    url: '/course/teacher',
+    url: '/courses/teacher',
     method: 'get'
   })
 }
@@ -28,7 +28,7 @@ export function getTeacherCourses() {
 // 根据ID获取课程
 export function getCourseById(id) {
   return request({
-    url: `/course/${id}`,
+    url: `/courses/${id}`,
     method: 'get'
   })
 }
@@ -36,7 +36,7 @@ export function getCourseById(id) {
 // 新增课程
 export function addCourse(data) {
   return request({
-    url: '/course',
+    url: '/courses',
     method: 'post',
     data
   })
@@ -45,7 +45,7 @@ export function addCourse(data) {
 // 更新课程
 export function updateCourse(id, data) {
   return request({
-    url: `/course/${id}`,
+    url: `/courses/${id}`,
     method: 'put',
     data
   })
@@ -54,7 +54,7 @@ export function updateCourse(id, data) {
 // 删除课程
 export function deleteCourse(id) {
   return request({
-    url: `/course/${id}`,
+    url: `/courses/${id}`,
     method: 'delete'
   })
 }

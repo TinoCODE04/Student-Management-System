@@ -19,7 +19,7 @@ import java.util.List;
  * 学院Controller
  */
 @RestController
-@RequestMapping("/api/college")
+@RequestMapping("/api/colleges")
 public class CollegeController {
     
     @Autowired

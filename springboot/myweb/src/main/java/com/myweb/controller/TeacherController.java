@@ -17,7 +17,7 @@ import java.util.List;
  * 教师Controller
  */
 @RestController
-@RequestMapping("/api/teacher")
+@RequestMapping("/api/teachers")
 public class TeacherController {
     
     @Autowired

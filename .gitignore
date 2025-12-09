@@ -2,6 +2,7 @@
 *.txt
 *.md
 !README.md
+!ARCHITECTURE.md
 
 # IDE
 .idea/

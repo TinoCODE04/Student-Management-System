@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 获取学院列表
 export function getCollegeList() {
   return request({
-    url: '/college/list',
+    url: '/colleges/list',
     method: 'get'
   })
 }
@@ -11,7 +11,7 @@ export function getCollegeList() {
 // 根据ID获取学院
 export function getCollegeById(id) {
   return request({
-    url: `/college/${id}`,
+    url: `/colleges/${id}`,
     method: 'get'
   })
 }
@@ -19,7 +19,7 @@ export function getCollegeById(id) {
 // 新增学院
 export function addCollege(data) {
   return request({
-    url: '/college',
+    url: '/colleges',
     method: 'post',
     data
   })
@@ -28,7 +28,7 @@ export function addCollege(data) {
 // 更新学院
 export function updateCollege(id, data) {
   return request({
-    url: `/college/${id}`,
+    url: `/colleges/${id}`,
     method: 'put',
     data
   })
@@ -37,7 +37,7 @@ export function updateCollege(id, data) {
 // 删除学院
 export function deleteCollege(id) {
   return request({
-    url: `/college/${id}`,
+    url: `/colleges/${id}`,
     method: 'delete'
   })
 }

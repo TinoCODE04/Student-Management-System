@@ -20,7 +20,7 @@ import java.util.List;
  * 课程Controller
  */
 @RestController
-@RequestMapping("/api/course")
+@RequestMapping("/api/courses")
 public class CourseController {
     
     @Autowired

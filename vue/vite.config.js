@@ -17,6 +17,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
+        // 指向 Spring Cloud Gateway 网关
         target: 'http://localhost:8080',
         changeOrigin: true,
       }

@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 获取教师列表
 export function getTeacherList() {
   return request({
-    url: '/teacher/list',
+    url: '/teachers/list',
     method: 'get'
   })
 }
@@ -11,7 +11,7 @@ export function getTeacherList() {
 // 根据ID获取教师
 export function getTeacherById(id) {
   return request({
-    url: `/teacher/${id}`,
+    url: `/teachers/${id}`,
     method: 'get'
   })
 }
@@ -19,7 +19,7 @@ export function getTeacherById(id) {
 // 修改密码（教师）
 export function updateTeacherPassword(data) {
   return request({
-    url: '/teacher/password',
+    url: '/teachers/password',
     method: 'put',
     data
   })
@@ -28,7 +28,7 @@ export function updateTeacherPassword(data) {
 // 获取当前教师信息
 export function getCurrentTeacherInfo() {
   return request({
-    url: '/teacher/info',
+    url: '/teachers/info',
     method: 'get'
   })
 }
@@ -36,7 +36,7 @@ export function getCurrentTeacherInfo() {
 // 更新教师个人信息
 export function updateTeacherInfo(data) {
   return request({
-    url: '/teacher/info',
+    url: '/teachers/info',
     method: 'put',
     data
   })

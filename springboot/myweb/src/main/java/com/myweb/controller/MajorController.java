@@ -19,7 +19,7 @@ import java.util.List;
  * 专业Controller
  */
 @RestController
-@RequestMapping("/api/major")
+@RequestMapping("/api/majors")
 public class MajorController {
     
     @Autowired

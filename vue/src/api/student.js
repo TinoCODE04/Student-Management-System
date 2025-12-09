@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 分页查询学生
 export function getStudentPage(params) {
   return request({
-    url: '/student/page',
+    url: '/students/page',
     method: 'get',
     params
   })
@@ -12,7 +12,7 @@ export function getStudentPage(params) {
 // 获取学生列表
 export function getStudentList() {
   return request({
-    url: '/student/list',
+    url: '/students/list',
     method: 'get'
   })
 }
@@ -20,7 +20,7 @@ export function getStudentList() {
 // 根据ID获取学生
 export function getStudentById(id) {
   return request({
-    url: `/student/${id}`,
+    url: `/students/${id}`,
     method: 'get'
   })
 }
@@ -28,7 +28,7 @@ export function getStudentById(id) {
 // 新增学生
 export function addStudent(data) {
   return request({
-    url: '/student',
+    url: '/students',
     method: 'post',
     data
   })
@@ -37,7 +37,7 @@ export function addStudent(data) {
 // 更新学生
 export function updateStudent(id, data) {
   return request({
-    url: `/student/${id}`,
+    url: `/students/${id}`,
     method: 'put',
     data
   })
@@ -46,7 +46,7 @@ export function updateStudent(id, data) {
 // 删除学生
 export function deleteStudent(id) {
   return request({
-    url: `/student/${id}`,
+    url: `/students/${id}`,
     method: 'delete'
   })
 }
@@ -54,7 +54,7 @@ export function deleteStudent(id) {
 // 修改密码（学生）
 export function updateStudentPassword(data) {
   return request({
-    url: '/student/password',
+    url: '/students/password',
     method: 'put',
     data
   })
@@ -63,7 +63,7 @@ export function updateStudentPassword(data) {
 // 获取当前学生信息
 export function getCurrentStudentInfo() {
   return request({
-    url: '/student/info',
+    url: '/students/info',
     method: 'get'
   })
 }

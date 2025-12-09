@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 获取专业列表
 export function getMajorList() {
   return request({
-    url: '/major/list',
+    url: '/majors/list',
     method: 'get'
   })
 }
@@ -11,7 +11,7 @@ export function getMajorList() {
 // 根据学院ID获取专业列表
 export function getMajorsByCollege(collegeId) {
   return request({
-    url: `/major/college/${collegeId}`,
+    url: `/majors/college/${collegeId}`,
     method: 'get'
   })
 }
@@ -19,7 +19,7 @@ export function getMajorsByCollege(collegeId) {
 // 根据ID获取专业
 export function getMajorById(id) {
   return request({
-    url: `/major/${id}`,
+    url: `/majors/${id}`,
     method: 'get'
   })
 }
@@ -27,7 +27,7 @@ export function getMajorById(id) {
 // 新增专业
 export function addMajor(data) {
   return request({
-    url: '/major',
+    url: '/majors',
     method: 'post',
     data
   })
@@ -36,7 +36,7 @@ export function addMajor(data) {
 // 更新专业
 export function updateMajor(id, data) {
   return request({
-    url: `/major/${id}`,
+    url: `/majors/${id}`,
     method: 'put',
     data
   })
@@ -45,7 +45,7 @@ export function updateMajor(id, data) {
 // 删除专业
 export function deleteMajor(id) {
   return request({
-    url: `/major/${id}`,
+    url: `/majors/${id}`,
     method: 'delete'
   })
 }

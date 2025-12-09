@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  * 学生Controller
  */
 @RestController
-@RequestMapping("/api/student")
+@RequestMapping("/api/students")
 public class StudentController {
     
     @Autowired

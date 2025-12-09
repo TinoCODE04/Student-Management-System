@@ -19,7 +19,7 @@ import java.util.Map;
  * 选课Controller
  */
 @RestController
-@RequestMapping("/api/selection")
+@RequestMapping("/api/selections")
 public class CourseSelectionController {
     
     @Autowired

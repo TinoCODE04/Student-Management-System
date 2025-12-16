@@ -37,4 +37,14 @@ public class StudentQueryDTO {
      * 每页条数
      */
     private Integer pageSize = 10;
+    
+    /**
+     * 排序字段（studentNo: 学号）
+     */
+    private String orderBy;
+    
+    /**
+     * 排序方式（asc: 升序, desc: 降序）
+     */
+    private String orderType;
 }

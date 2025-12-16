@@ -23,6 +23,12 @@
               />
             </el-select>
           </el-form-item>
+          <el-form-item label="学号排序">
+            <el-select v-model="sortOrder" placeholder="请选择排序" clearable @change="handleSortOrderChange" style="width: 150px">
+              <el-option label="从小到大" value="asc" />
+              <el-option label="从大到小" value="desc" />
+            </el-select>
+          </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="handleSearch">
               <el-icon><Search /></el-icon>查询
@@ -38,8 +44,8 @@
       </div>
       
       <!-- 表格区域 -->
-      <el-table :data="tableData" v-loading="loading" stripe border>
-        <el-table-column prop="studentNo" label="学号" width="120" />
+      <el-table :data="tableData" v-loading="loading" stripe border @sort-change="handleSortChange">
+        <el-table-column prop="studentNo" label="学号" width="120" sortable="custom" />
         <el-table-column prop="name" label="姓名" width="100" />
         <el-table-column prop="gender" label="性别" width="80" />
         <el-table-column prop="age" label="年龄" width="80" />
@@ -183,7 +189,9 @@ const queryForm = reactive({
   className: '',
   collegeId: null,
   pageNum: 1,
-  pageSize: 10
+  pageSize: 10,
+  orderBy: '',
+  orderType: ''
 })
 
 // 表格数据
@@ -193,6 +201,9 @@ const loading = ref(false)
 
 // 学院列表
 const collegeList = ref([])
+
+// 排序选择
+const sortOrder = ref('')
 
 // 对话框
 const dialogVisible = ref(false)
@@ -272,6 +283,37 @@ const handleReset = () => {
   queryForm.studentNo = ''
   queryForm.className = ''
   queryForm.collegeId = null
+  queryForm.pageNum = 1
+  queryForm.orderBy = ''
+  queryForm.orderType = ''
+  sortOrder.value = ''
+  loadData()
+}
+
+// 排序选择改变
+const handleSortOrderChange = (value) => {
+  if (value) {
+    queryForm.orderBy = 'studentNo'
+    queryForm.orderType = value
+  } else {
+    queryForm.orderBy = ''
+    queryForm.orderType = ''
+  }
+  queryForm.pageNum = 1
+  loadData()
+}
+
+// 排序处理（表头点击）
+const handleSortChange = ({ prop, order }) => {
+  if (order) {
+    queryForm.orderBy = prop
+    queryForm.orderType = order === 'ascending' ? 'asc' : 'desc'
+    sortOrder.value = queryForm.orderType
+  } else {
+    queryForm.orderBy = ''
+    queryForm.orderType = ''
+    sortOrder.value = ''
+  }
   queryForm.pageNum = 1
   loadData()
 }

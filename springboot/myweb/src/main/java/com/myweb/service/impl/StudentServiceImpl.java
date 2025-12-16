@@ -55,8 +55,21 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
             wrapper.eq(Student::getCollegeId, queryDTO.getCollegeId());
         }
         
-        // 按创建时间倒序
-        wrapper.orderByDesc(Student::getCreateTime);
+        // 排序处理
+        if (StringUtils.hasText(queryDTO.getOrderBy())) {
+            boolean isAsc = "asc".equalsIgnoreCase(queryDTO.getOrderType());
+            
+            // 根据排序字段进行排序
+            if ("studentNo".equals(queryDTO.getOrderBy())) {
+                wrapper.orderBy(true, isAsc, Student::getStudentNo);
+            } else {
+                // 默认按创建时间倒序
+                wrapper.orderByDesc(Student::getCreateTime);
+            }
+        } else {
+            // 默认按创建时间倒序
+            wrapper.orderByDesc(Student::getCreateTime);
+        }
         
         return this.page(page, wrapper);
     }

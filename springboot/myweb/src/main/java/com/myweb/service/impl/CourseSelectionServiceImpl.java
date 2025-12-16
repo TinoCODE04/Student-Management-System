@@ -6,6 +6,7 @@ import com.myweb.entity.CourseSelection;
 import com.myweb.mapper.CourseMapper;
 import com.myweb.mapper.CourseSelectionMapper;
 import com.myweb.service.CourseSelectionService;
+import com.myweb.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,9 @@ public class CourseSelectionServiceImpl extends ServiceImpl<CourseSelectionMappe
     
     @Autowired
     private CourseMapper courseMapper;
+    
+    @Autowired
+    private NotificationService notificationService;
     
     @Override
     public List<CourseSelection> listByStudentId(Long studentId) {
@@ -60,6 +64,17 @@ public class CourseSelectionServiceImpl extends ServiceImpl<CourseSelectionMappe
         if (result > 0) {
             course.setSelectedCount(course.getSelectedCount() + 1);
             courseMapper.updateById(course);
+            
+            // 发送选课成功通知
+            notificationService.createNotification(
+                studentId, 
+                "student", 
+                "选课成功", 
+                "您已成功选择课程：" + course.getCourseName(),
+                "selection",
+                courseId,
+                "/student/courses"
+            );
         }
         
         return result > 0;

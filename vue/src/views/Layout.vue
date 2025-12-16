@@ -95,6 +95,9 @@
         </div>
         
         <div class="header-right">
+          <!-- 通知铃铛 -->
+          <NotificationBell />
+          
           <el-dropdown @command="handleCommand">
             <span class="user-info">
               <el-avatar :size="32" class="user-avatar" :src="userAvatar">
@@ -124,7 +127,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { 
@@ -133,6 +136,8 @@ import {
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/counter'
 import { logout } from '@/api/auth'
+import NotificationBell from '@/components/NotificationBell.vue'
+import websocket from '@/utils/websocket'
 
 // 导入头像图片 - 学生头像
 import stu_ava1 from '@/assets/p1.jpeg'
@@ -226,6 +231,8 @@ const handleCommand = async (command) => {
         } catch (e) {
           // 忽略错误
         }
+        // 断开 WebSocket
+        websocket.close()
         userStore.logout()
         ElMessage.success('已退出登录')
         router.push('/login')
@@ -233,6 +240,18 @@ const handleCommand = async (command) => {
       break
   }
 }
+
+// WebSocket 连接
+onMounted(() => {
+  const userId = userStore.userInfo.userId
+  if (userId) {
+    websocket.connect(userId)
+  }
+})
+
+onUnmounted(() => {
+  websocket.close()
+})
 </script>
 
 <style scoped>

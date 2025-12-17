@@ -8,7 +8,6 @@ import com.myweb.mapper.NotificationMapper;
 import com.myweb.service.NotificationService;
 import com.myweb.websocket.WebSocketServer;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -19,12 +18,12 @@ import org.springframework.stereotype.Service;
 public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Notification> 
         implements NotificationService {
     
-    @Autowired
-    private WebSocketServer webSocketServer;
-    
     @Override
     public void createNotification(Long userId, String userType, String title, String content, 
                                    String type, Long relatedId, String url) {
+        log.info("📝 Creating notification: userId={}, userType={}, title={}, content={}", 
+                userId, userType, title, content);
+        
         Notification notification = new Notification();
         notification.setUserId(userId);
         notification.setUserType(userType);
@@ -35,19 +34,27 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
         notification.setUrl(url);
         notification.setStatus(0); // 未读
         
-        save(notification);
+        log.info("💾 Saving notification to database...");
+        boolean saved = save(notification);
+        log.info("💾 Notification saved to database: {}, notification id: {}", saved, notification.getId());
         
-        // 通过WebSocket实时推送
-        webSocketServer.sendMessageToUser(userId.toString(), notification);
-        
-        log.info("Notification created for user {}: {}", userId, title);
+        // 通过WebSocket实时推送 - 使用静态方法调用
+        try {
+            log.info("📡 Attempting to send WebSocket message to userId: {}", userId);
+            WebSocketServer.sendMessageToUserStatic(userId.toString(), notification);
+            log.info("✅ Notification created and sent for user {}: {}", userId, title);
+        } catch (Exception e) {
+            log.error("❌ Failed to send WebSocket notification for user {}: {}", userId, e.getMessage(), e);
+            log.info("💾 Notification saved in database for user {}: {}", userId, title);
+        }
     }
     
     @Override
-    public Page<Notification> getUserNotifications(Long userId, int pageNum, int pageSize) {
+    public Page<Notification> getUserNotifications(Long userId, String userType, int pageNum, int pageSize) {
         Page<Notification> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Notification::getUserId, userId)
+               .eq(Notification::getUserType, userType)  // 重要：同时过滤用户类型
                .orderByDesc(Notification::getCreateTime);
         
         return page(page, wrapper);
@@ -63,9 +70,10 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
     }
     
     @Override
-    public void markAllAsRead(Long userId) {
+    public void markAllAsRead(Long userId, String userType) {
         LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Notification::getUserId, userId)
+               .eq(Notification::getUserType, userType)  // 重要：同时过滤用户类型
                .eq(Notification::getStatus, 0);
         
         Notification update = new Notification();
@@ -74,9 +82,10 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
     }
     
     @Override
-    public long getUnreadCount(Long userId) {
+    public long getUnreadCount(Long userId, String userType) {
         LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Notification::getUserId, userId)
+               .eq(Notification::getUserType, userType)  // 重要：同时过滤用户类型
                .eq(Notification::getStatus, 0);
         
         return count(wrapper);

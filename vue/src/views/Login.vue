@@ -73,6 +73,22 @@
             </div>
           </div>
         </el-form-item>
+
+        <!-- 记住我选项 -->
+        <el-form-item>
+          <div class="remember-me-row">
+            <el-checkbox v-model="rememberMe" size="large">
+              <span class="remember-me-text">一周内免登录</span>
+            </el-checkbox>
+            <el-tooltip
+              :content="`勾选后，登录信息将保存${STORAGE_CONFIG.REMEMBER_ME_DAYS}天，即使关闭浏览器也能保持登录状态。不勾选则仅在当前标签页有效。`"
+              placement="top"
+              effect="light"
+            >
+              <el-icon class="info-icon"><QuestionFilled /></el-icon>
+            </el-tooltip>
+          </div>
+        </el-form-item>
         
         <el-form-item>
           <el-button
@@ -100,9 +116,10 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, Lock, Picture, Loading, Refresh, School } from '@element-plus/icons-vue'
+import { User, Lock, Picture, Loading, Refresh, School, QuestionFilled } from '@element-plus/icons-vue'
 import { getCaptcha, login } from '@/api/auth'
 import { useUserStore } from '@/stores/counter'
+import { rememberMeStorage, STORAGE_CONFIG } from '@/utils/storage'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -111,6 +128,7 @@ const loginFormRef = ref(null)
 const loading = ref(false)
 const captchaImage = ref('')
 const captchaKey = ref('')
+const rememberMe = ref(rememberMeStorage.get() || false) // 从存储中恢复"记住我"状态
 
 const loginForm = reactive({
   username: '',
@@ -158,10 +176,15 @@ const handleLogin = async () => {
         captchaKey: captchaKey.value
       })
       
-      // 保存登录信息
-      userStore.login(res.data)
+      // 保存登录信息，传入"记住我"状态
+      userStore.login(res.data, rememberMe.value)
       
-      ElMessage.success('登录成功')
+      // 根据"记住我"显示不同的提示
+      if (rememberMe.value) {
+        ElMessage.success(`登录成功！已保存登录状态，${STORAGE_CONFIG.REMEMBER_ME_DAYS}天内免登录`)
+      } else {
+        ElMessage.success('登录成功！关闭标签页后需重新登录')
+      }
       
       // 跳转到首页
       router.push('/dashboard')
@@ -310,15 +333,18 @@ onMounted(() => {
 
 .custom-input :deep(.el-input__wrapper) {
   border-radius: 10px;
+  border: 2px solid #dcdfe6;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
 }
 
 .custom-input :deep(.el-input__wrapper:hover) {
+  border-color: #c0c4cc;
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
 }
 
 .custom-input :deep(.el-input__wrapper.is-focus) {
+  border-color: #409eff;
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.25);
 }
 
@@ -402,6 +428,72 @@ onMounted(() => {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* 记住我选项样式 */
+.remember-me-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  padding-left: 4px;
+  margin-bottom: 8px;
+}
+
+.remember-me-text {
+  color: #52504e;
+  font-size: 13px;
+  font-weight: 450;
+  user-select: none;
+}
+
+.info-icon {
+  color: #575353;
+  font-size: 17px;
+  cursor: help;
+  transition: all 0.3s ease;
+}
+
+.info-icon:hover {
+  color: #409eff;
+  transform: scale(1.15);
+}
+
+/* 自定义复选框样式 */
+:deep(.el-checkbox) {
+  height: auto;
+}
+
+:deep(.el-checkbox__label) {
+  padding-left: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+}
+
+:deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
+  background-color: #409eff;
+  border-color: #409eff;
+  border-width: 2.5px;
+}
+
+:deep(.el-checkbox__input.is-checked .el-checkbox__inner::after) {
+  border-width: 2px;
+  border-color: #fff;
+}
+
+:deep(.el-checkbox__inner) {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border-width: 2.5px;
+  border-color: #606266;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-checkbox__inner:hover) {
+  border-color: #409eff;
+  border-width: 2.5px;
 }
 
 .login-button {

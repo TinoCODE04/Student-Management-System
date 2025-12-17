@@ -194,7 +194,7 @@
         >
           <el-icon class="el-icon--upload"><upload-filled /></el-icon>
           <div class="el-upload__text">
-            拖拽文件到此处或<em>点击上传</em>
+            拖放文件到此处或<em>点击上传</em>
           </div>
           <template #tip>
             <div class="el-upload__tip">
@@ -214,7 +214,11 @@
             </el-table-column>
             <el-table-column prop="uploaderName" label="上传者" width="100" />
             <el-table-column prop="downloadCount" label="下载次数" width="100" align="center" />
-            <el-table-column prop="createTime" label="上传时间" width="160" />
+            <el-table-column prop="createTime" label="上传时间" width="160">
+              <template #default="{ row }">
+                {{ formatDate(row.createTime) }}
+              </template>
+            </el-table-column>
             <el-table-column label="操作" width="240" align="center" fixed="right">
               <template #default="{ row }">
                 <el-button type="primary" size="small" @click="handlePreview(row)">
@@ -350,6 +354,7 @@ import { getCollegeList } from '@/api/college'
 import { getTeacherList } from '@/api/teacher'
 import { getAttachmentList, deleteAttachment, downloadAttachment } from '@/api/attachment'
 import vDialogResize from '@/directives/dialogResize'
+import { tokenStorage } from '@/utils/storage'
 
 const queryForm = reactive({
   courseName: '',
@@ -378,7 +383,7 @@ const uploadAction = computed(() => {
   return `/api/course/attachment/upload`
 })
 const uploadHeaders = computed(() => ({
-  Authorization: `Bearer ${localStorage.getItem('token')}`
+  Authorization: `Bearer ${tokenStorage.get()}`
 }))
 const uploadData = computed(() => ({
   courseId: currentCourse.value?.id
@@ -739,6 +744,26 @@ const formatFileSize = (bytes) => {
   const sizes = ['B', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
+
+// 格式化日期时间，去掉 ISO 字符串中的 'T' 并格式化为 YYYY-MM-DD HH:mm:ss
+const formatDate = (v) => {
+  if (!v) return '-'
+  try {
+    // 如果是数字或 Date 对象，直接转换
+    const d = (typeof v === 'number' || v instanceof Date) ? new Date(v) : new Date(String(v).replace('T', ' '))
+    if (isNaN(d.getTime())) return String(v).replace('T', ' ')
+    const pad = (n) => String(n).padStart(2, '0')
+    const Y = d.getFullYear()
+    const M = pad(d.getMonth() + 1)
+    const D = pad(d.getDate())
+    const h = pad(d.getHours())
+    const m = pad(d.getMinutes())
+    const s = pad(d.getSeconds())
+    return `${Y}-${M}-${D} ${h}:${m}:${s}`
+  } catch (e) {
+    return String(v).replace('T', ' ')
+  }
 }
 
 onMounted(() => {

@@ -25,8 +25,14 @@ public interface CourseSelectionMapper extends BaseMapper<CourseSelection> {
     List<CourseSelection> selectByCourseId(Long courseId);
     
     /**
-     * 查询学生是否已选该课程
+     * 查询学生是否已选该课程（不包括已退选的）
+     */
+    @Select("SELECT * FROM course_selection WHERE student_id = #{studentId} AND course_id = #{courseId} AND status != 'dropped'")
+    CourseSelection selectByStudentAndCourse(Long studentId, Long courseId);
+    
+    /**
+     * 查询学生的该课程选课记录（包括所有状态）
      */
     @Select("SELECT * FROM course_selection WHERE student_id = #{studentId} AND course_id = #{courseId}")
-    CourseSelection selectByStudentAndCourse(Long studentId, Long courseId);
+    CourseSelection selectByStudentAndCourseAll(Long studentId, Long courseId);
 }

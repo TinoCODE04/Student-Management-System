@@ -8,6 +8,11 @@
             <div class="welcome-text">
               <h2>欢迎回来，{{ userStore.userInfo.name }}！</h2>
               <p>{{ greeting }}，祝您工作愉快！</p>
+              <!-- 登录状态提示 -->
+              <p v-if="loginStatusMessage" class="login-status">
+                <el-icon><Clock /></el-icon>
+                <span>{{ loginStatusMessage }}</span>
+              </p>
             </div>
             <div class="welcome-date">
               <p class="date">{{ currentDate }}</p>
@@ -161,7 +166,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { User, Reading, School, Collection, List, Notebook, TrophyBase, Star } from '@element-plus/icons-vue'
+import { User, Reading, School, Collection, List, Notebook, TrophyBase, Star, Clock } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/counter'
 import { getStudentList } from '@/api/student'
 import { getCourseList } from '@/api/course'
@@ -169,6 +174,7 @@ import { getCollegeList } from '@/api/college'
 import { getMajorList } from '@/api/major'
 import { getMySelections } from '@/api/selection'
 import { getCurrentStudentInfo } from '@/api/student'
+import { tokenStorage } from '@/utils/storage'
 
 const userStore = useUserStore()
 
@@ -202,6 +208,21 @@ const greeting = computed(() => {
   if (hour < 17) return '下午好'
   if (hour < 19) return '傍晚好'
   return '晚上好'
+})
+
+// 登录状态提示
+const loginStatusMessage = computed(() => {
+  const remainingDays = tokenStorage.getRemainingDays()
+  if (remainingDays === null) {
+    // 未勾选"记住我"，使用sessionStorage
+    return '会话登录中（关闭标签页后需重新登录）'
+  } else if (remainingDays > 0) {
+    // 勾选了"记住我"，显示剩余天数
+    return `已记住登录状态，还剩 ${remainingDays} 天有效期`
+  } else {
+    // 已过期
+    return '登录已过期，请重新登录'
+  }
 })
 
 // 更新时间
@@ -302,6 +323,23 @@ onUnmounted(() => {
 .welcome-text p {
   margin: 0;
   opacity: 0.9;
+}
+
+.welcome-text .login-status {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.welcome-text .login-status .el-icon {
+  font-size: 14px;
 }
 
 .welcome-date {

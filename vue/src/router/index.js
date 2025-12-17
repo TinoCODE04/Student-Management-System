@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { tokenStorage, userInfoStorage } from '@/utils/storage'
 
 // 公共路由
 const publicRoutes = [
@@ -145,9 +146,9 @@ router.beforeEach((to, from, next) => {
   // 设置页面标题
   document.title = to.meta.title ? `${to.meta.title} - 学生信息管理系统` : '学生信息管理系统'
   
-  // 获取token和用户角色
-  const token = localStorage.getItem('token')
-  const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+  // 获取token和用户角色（使用 sessionStorage）
+  const token = tokenStorage.get()
+  const userInfo = userInfoStorage.get()
   const role = userInfo.role
   
   // 已登录用户访问登录页，跳转到首页

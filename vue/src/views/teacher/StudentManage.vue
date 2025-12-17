@@ -24,10 +24,10 @@
             </el-select>
           </el-form-item>
           <el-form-item label="学号排序">
-            <el-select v-model="sortOrder" placeholder="请选择排序" clearable @change="handleSortOrderChange" style="width: 150px">
-              <el-option label="从小到大" value="asc" />
-              <el-option label="从大到小" value="desc" />
-            </el-select>
+            <el-radio-group v-model="sortOrder" @change="handleSortOrderChange">
+              <el-radio value="asc">从小到大</el-radio>
+              <el-radio value="desc">从大到小</el-radio>
+            </el-radio-group>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="handleSearch">

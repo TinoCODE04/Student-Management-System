@@ -18,22 +18,27 @@ public class NotificationController {
     private NotificationService notificationService;
     
     /**
-     * 获取用户通知列表
+     * 获取用户通知列表（按用户ID和用户类型过滤）
      */
     @GetMapping("/list")
     public Result<Page<Notification>> list(@RequestParam(defaultValue = "1") int pageNum,
                                             @RequestParam(defaultValue = "10") int pageSize,
-                                            @RequestAttribute("userId") Long userId) {
-        Page<Notification> page = notificationService.getUserNotifications(userId, pageNum, pageSize);
+                                            @RequestAttribute("userId") Long userId,
+                                            @RequestAttribute("role") String role) {
+        // 将 role (student/teacher) 转换为 userType
+        String userType = role;
+        Page<Notification> page = notificationService.getUserNotifications(userId, userType, pageNum, pageSize);
         return Result.success(page);
     }
     
     /**
-     * 获取未读数量
+     * 获取未读数量（按用户ID和用户类型过滤）
      */
     @GetMapping("/unread-count")
-    public Result<Long> unreadCount(@RequestAttribute("userId") Long userId) {
-        long count = notificationService.getUnreadCount(userId);
+    public Result<Long> unreadCount(@RequestAttribute("userId") Long userId,
+                                     @RequestAttribute("role") String role) {
+        String userType = role;
+        long count = notificationService.getUnreadCount(userId, userType);
         return Result.success(count);
     }
     
@@ -48,11 +53,13 @@ public class NotificationController {
     }
     
     /**
-     * 全部标记为已读
+     * 全部标记为已读（按用户ID和用户类型过滤）
      */
     @PostMapping("/read-all")
-    public Result<Void> markAllAsRead(@RequestAttribute("userId") Long userId) {
-        notificationService.markAllAsRead(userId);
+    public Result<Void> markAllAsRead(@RequestAttribute("userId") Long userId,
+                                       @RequestAttribute("role") String role) {
+        String userType = role;
+        notificationService.markAllAsRead(userId, userType);
         return Result.success("全部标记为已读", null);
     }
 }

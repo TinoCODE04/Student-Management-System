@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { tokenStorage, userInfoStorage, rememberMeStorage } from '@/utils/storage'
 
 export const useUserStore = defineStore('user', () => {
-  // 状态
-  const token = ref(localStorage.getItem('token') || '')
-  const userInfo = ref(JSON.parse(localStorage.getItem('userInfo') || '{}'))
+  // 状态（支持"记住我"功能，从 localStorage 或 sessionStorage 获取）
+  const token = ref(tokenStorage.get() || '')
+  const userInfo = ref(userInfoStorage.get() || {})
+  const rememberMe = ref(rememberMeStorage.get() || false)
   
   // 计算属性
   const isLoggedIn = computed(() => !!token.value)
@@ -12,42 +14,52 @@ export const useUserStore = defineStore('user', () => {
   const isStudent = computed(() => userInfo.value.role === 'student')
   
   // 操作
-  function setToken(newToken) {
+  function setToken(newToken, remember = false) {
     token.value = newToken
-    localStorage.setItem('token', newToken)
+    tokenStorage.set(newToken, remember)
   }
   
-  function setUserInfo(info) {
+  function setUserInfo(info, remember = false) {
     userInfo.value = info
-    localStorage.setItem('userInfo', JSON.stringify(info))
+    userInfoStorage.set(info, remember)
   }
   
-  function login(loginData) {
-    setToken(loginData.token)
+  function setRememberMe(value) {
+    rememberMe.value = value
+    rememberMeStorage.set(value)
+  }
+  
+  function login(loginData, remember = false) {
+    setToken(loginData.token, remember)
     setUserInfo({
       userId: loginData.userId,
       username: loginData.username,
       name: loginData.name,
       role: loginData.role,
       avatar: loginData.avatar
-    })
+    }, remember)
+    setRememberMe(remember)
   }
   
   function logout() {
     token.value = ''
     userInfo.value = {}
-    localStorage.removeItem('token')
-    localStorage.removeItem('userInfo')
+    rememberMe.value = false
+    tokenStorage.remove()
+    userInfoStorage.remove()
+    rememberMeStorage.remove()
   }
   
   return {
     token,
     userInfo,
+    rememberMe,
     isLoggedIn,
     isTeacher,
     isStudent,
     setToken,
     setUserInfo,
+    setRememberMe,
     login,
     logout
   }

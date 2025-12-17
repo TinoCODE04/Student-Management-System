@@ -29,7 +29,9 @@ public class WebSocketServer {
     @OnOpen
     public void onOpen(Session session, @PathParam("userId") String userId) {
         ONLINE_USERS.put(userId, session);
-        log.info("WebSocket connected: userId={}, total={}", userId, ONLINE_USERS.size());
+        log.info("✅ WebSocket connected: userId={}, sessionId={}, total={}", 
+                userId, session.getId(), ONLINE_USERS.size());
+        log.info("📋 Current online users: {}", ONLINE_USERS.keySet());
     }
     
     /**
@@ -58,21 +60,32 @@ public class WebSocketServer {
     }
     
     /**
-     * 发送消息给指定用户
+     * 发送消息给指定用户（静态方法，供外部调用）
      */
-    public void sendMessageToUser(String userId, Object message) {
+    public static void sendMessageToUserStatic(String userId, Object message) {
+        log.info("🔔 Attempting to send message to userId={}, online users: {}", 
+                userId, ONLINE_USERS.keySet());
+        
         Session session = ONLINE_USERS.get(userId);
         if (session != null && session.isOpen()) {
             try {
                 String json = objectMapper.writeValueAsString(message);
                 session.getBasicRemote().sendText(json);
-                log.info("Message sent to userId={}", userId);
+                log.info("✅ Message sent successfully to userId={}, message: {}", userId, json);
             } catch (IOException e) {
-                log.error("Error sending message to userId=" + userId, e);
+                log.error("❌ Error sending message to userId=" + userId, e);
             }
         } else {
-            log.debug("User {} is not online, message not sent", userId);
+            log.warn("⚠️ User {} is not online or session is closed, message not sent. Online users: {}", 
+                    userId, ONLINE_USERS.keySet());
         }
+    }
+    
+    /**
+     * 发送消息给指定用户（实例方法）
+     */
+    public void sendMessageToUser(String userId, Object message) {
+        sendMessageToUserStatic(userId, message);
     }
     
     /**

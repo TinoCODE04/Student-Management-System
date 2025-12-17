@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
+import { tokenStorage, userInfoStorage } from './storage'
 
 // 创建axios实例
 const request = axios.create({
@@ -14,8 +15,8 @@ const request = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
   (config) => {
-    // 获取token
-    const token = localStorage.getItem('token')
+    // 获取token（使用 sessionStorage）
+    const token = tokenStorage.get()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -38,8 +39,8 @@ request.interceptors.response.use(
       
       // 401: 未登录或Token过期
       if (res.code === 401) {
-        localStorage.removeItem('token')
-        localStorage.removeItem('userInfo')
+        tokenStorage.remove()
+        userInfoStorage.remove()
         router.push('/login')
       }
       
@@ -61,8 +62,8 @@ request.interceptors.response.use(
       
       if (status === 401) {
         ElMessage.error('登录已过期，请重新登录')
-        localStorage.removeItem('token')
-        localStorage.removeItem('userInfo')
+        tokenStorage.remove()
+        userInfoStorage.remove()
         router.push('/login')
       } else if (status === 403) {
         ElMessage.error('无权限访问')

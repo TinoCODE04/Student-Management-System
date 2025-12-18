@@ -104,4 +104,23 @@ public class WebSocketServer {
             log.error("Error broadcasting message", e);
         }
     }
+    
+    /**
+     * 发送通知给指定角色的用户
+     */
+    public void sendNotification(com.myweb.entity.Notification notification) {
+        // 这里简单实现广播,实际应该根据targetRole过滤用户
+        try {
+            String json = objectMapper.writeValueAsString(notification);
+            for (String userId : ONLINE_USERS.keySet()) {
+                Session session = ONLINE_USERS.get(userId);
+                if (session != null && session.isOpen()) {
+                    session.getBasicRemote().sendText(json);
+                }
+            }
+            log.info("Notification sent to {} online users", ONLINE_USERS.size());
+        } catch (IOException e) {
+            log.error("Error sending notification", e);
+        }
+    }
 }

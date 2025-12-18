@@ -1,36 +1,36 @@
 <template>
-  <div class="login-container">
+  <div class="admin-login-container">
     <!-- 动态背景粒子效果 -->
     <div class="particles">
       <span v-for="i in 20" :key="i" class="particle"></span>
     </div>
     
-    <div class="login-box">
+    <div class="admin-login-box">
       <!-- Logo 和标题区域 -->
-      <div class="login-header">
+      <div class="admin-header">
         <div class="logo-wrapper">
-          <el-icon class="logo-icon"><School /></el-icon>
+          <el-icon class="logo-icon"><Monitor /></el-icon>
         </div>
-        <h2 class="login-title">学生信息管理系统</h2>
-        <p class="login-subtitle">Student Information Management System</p>
+        <h2 class="admin-title">管理员登录</h2>
+        <p class="admin-subtitle">Administrator Login</p>
       </div>
       
       <el-form
         ref="loginFormRef"
         :model="loginForm"
         :rules="loginRules"
-        class="login-form"
+        class="admin-form"
         @keyup.enter="handleLogin"
       >
         <el-form-item prop="username">
           <el-input
             v-model="loginForm.username"
-            placeholder="请输入用户名"
+            placeholder="管理员账号"
             size="large"
             class="custom-input"
           >
             <template #prefix>
-              <el-icon class="input-icon"><User /></el-icon>
+              <el-icon class="input-icon"><UserFilled /></el-icon>
             </template>
           </el-input>
         </el-form-item>
@@ -39,7 +39,7 @@
           <el-input
             v-model="loginForm.password"
             type="password"
-            placeholder="请输入密码"
+            placeholder="密码"
             size="large"
             show-password
             class="custom-input"
@@ -54,7 +54,7 @@
           <div class="captcha-row">
             <el-input
               v-model="loginForm.captcha"
-              placeholder="请输入验证码"
+              placeholder="验证码"
               size="large"
               class="captcha-input custom-input"
             >
@@ -73,28 +73,12 @@
             </div>
           </div>
         </el-form-item>
-
-        <!-- 记住我选项 -->
-        <el-form-item>
-          <div class="remember-me-row">
-            <el-checkbox v-model="rememberMe" size="large">
-              <span class="remember-me-text">一周内免登录</span>
-            </el-checkbox>
-            <el-tooltip
-              :content="`勾选后，登录信息将保存${STORAGE_CONFIG.REMEMBER_ME_DAYS}天，即使关闭浏览器也能保持登录状态。不勾选则仅在当前标签页有效。`"
-              placement="top"
-              effect="light"
-            >
-              <el-icon class="info-icon"><QuestionFilled /></el-icon>
-            </el-tooltip>
-          </div>
-        </el-form-item>
         
         <el-form-item>
           <el-button
             type="primary"
             size="large"
-            class="login-button"
+            class="admin-login-btn"
             :loading="loading"
             @click="handleLogin"
           >
@@ -103,20 +87,19 @@
           </el-button>
         </el-form-item>
         
-        <!-- 管理员登录入口 -->
         <el-form-item>
-          <div class="admin-login-hint">
-            <router-link to="/admin/login" class="admin-link">
-              <el-icon><Key /></el-icon>
-              <span>管理员登录</span>
+          <div class="back-link-wrapper">
+            <router-link to="/login" class="back-link">
+              <el-icon><Back /></el-icon>
+              <span>返回普通登录</span>
             </router-link>
           </div>
         </el-form-item>
       </el-form>
       
       <!-- 底部信息 -->
-      <div class="login-footer">
-        <p>© 2025 学生信息管理系统</p>
+      <div class="admin-footer">
+        <p>© 2025 学生信息管理系统 - 管理员端</p>
       </div>
     </div>
   </div>
@@ -126,29 +109,25 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, Lock, Picture, Loading, Refresh, School, QuestionFilled, Key } from '@element-plus/icons-vue'
+import { UserFilled, Lock, Picture, Loading, Refresh, Monitor, Back } from '@element-plus/icons-vue'
 import { getCaptcha, login } from '@/api/auth'
-import { useUserStore } from '@/stores/counter'
-import { rememberMeStorage, STORAGE_CONFIG } from '@/utils/storage'
+import { tokenStorage, userInfoStorage } from '@/utils/storage'
 
 const router = useRouter()
-const userStore = useUserStore()
-
-const loginFormRef = ref(null)
+const loginFormRef = ref()
 const loading = ref(false)
 const captchaImage = ref('')
-const captchaKey = ref('')
-const rememberMe = ref(rememberMeStorage.get() || false) // 从存储中恢复"记住我"状态
 
 const loginForm = reactive({
   username: '',
   password: '',
-  captcha: ''
+  captcha: '',
+  captchaKey: ''
 })
 
 const loginRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
+    { required: true, message: '请输入管理员账号', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
@@ -159,14 +138,14 @@ const loginRules = {
   ]
 }
 
-// 刷新验证码
+// 获取验证码
 const refreshCaptcha = async () => {
   try {
-    const res = await getCaptcha()
-    captchaKey.value = res.data.captchaKey
-    captchaImage.value = res.data.captchaImage
+    const { data } = await getCaptcha()
+    captchaImage.value = data.captchaImage
+    loginForm.captchaKey = data.captchaKey
   } catch (error) {
-    console.error('获取验证码失败:', error)
+    ElMessage.error('获取验证码失败')
   }
 }
 
@@ -175,36 +154,38 @@ const handleLogin = async () => {
   if (!loginFormRef.value) return
   
   await loginFormRef.value.validate(async (valid) => {
-    if (!valid) return
-    
-    loading.value = true
-    try {
-      const res = await login({
-        username: loginForm.username,
-        password: loginForm.password,
-        captcha: loginForm.captcha,
-        captchaKey: captchaKey.value
-      })
-      
-      // 保存登录信息，传入"记住我"状态
-      userStore.login(res.data, rememberMe.value)
-      
-      // 根据"记住我"显示不同的提示
-      if (rememberMe.value) {
-        ElMessage.success(`登录成功！已保存登录状态，${STORAGE_CONFIG.REMEMBER_ME_DAYS}天内免登录`)
-      } else {
-        ElMessage.success('登录成功！关闭标签页后需重新登录')
+    if (valid) {
+      loading.value = true
+      try {
+        const { data } = await login(loginForm)
+        
+        // 验证是否是管理员
+        if (data.role !== 'admin') {
+          ElMessage.error('此账号不是管理员账号，请使用普通登录')
+          await refreshCaptcha()
+          loginForm.captcha = ''
+          return
+        }
+        
+        // 保存token和用户信息到 storage
+        tokenStorage.set(data.token)
+        userInfoStorage.set({
+          userId: data.userId,
+          username: data.username,
+          name: data.name,
+          role: data.role,
+          avatar: data.avatar
+        })
+        
+        ElMessage.success('登录成功')
+        router.push('/admin/dashboard')
+      } catch (error) {
+        ElMessage.error(error.response?.data?.message || '登录失败')
+        await refreshCaptcha()
+        loginForm.captcha = ''
+      } finally {
+        loading.value = false
       }
-      
-      // 跳转到首页
-      router.push('/dashboard')
-    } catch (error) {
-      console.error('登录失败:', error)
-      // 刷新验证码
-      refreshCaptcha()
-      loginForm.captcha = ''
-    } finally {
-      loading.value = false
     }
   })
 }
@@ -215,12 +196,12 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.login-container {
+.admin-login-container {
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-image: url('@/assets/suep.jpg');
+  background-image: url('@/assets/admin-bg.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -229,7 +210,7 @@ onMounted(() => {
 }
 
 /* 半透明遮罩层 */
-.login-container::before {
+.admin-login-container::before {
   content: '';
   position: absolute;
   top: 0;
@@ -277,7 +258,7 @@ onMounted(() => {
   }
 }
 
-.login-box {
+.admin-login-box {
   width: 420px;
   padding: 40px 45px;
   background: rgba(255, 255, 255, 0.95);
@@ -300,7 +281,7 @@ onMounted(() => {
   }
 }
 
-.login-header {
+.admin-header {
   text-align: center;
   margin-bottom: 35px;
 }
@@ -309,12 +290,12 @@ onMounted(() => {
   width: 70px;
   height: 70px;
   margin: 0 auto 15px;
-  background: linear-gradient(135deg, #409eff 0%, #53a8ff 100%);
+  background: linear-gradient(135deg, #222326 0%, #351d4e 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 30px rgba(64, 158, 255, 0.3);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
 }
 
 .logo-icon {
@@ -322,7 +303,7 @@ onMounted(() => {
   color: #fff;
 }
 
-.login-title {
+.admin-title {
   margin: 0 0 8px 0;
   color: #303133;
   font-size: 26px;
@@ -330,14 +311,14 @@ onMounted(() => {
   letter-spacing: 2px;
 }
 
-.login-subtitle {
+.admin-subtitle {
   margin: 0;
   color: #909399;
   font-size: 12px;
   letter-spacing: 1px;
 }
 
-.login-form {
+.admin-form {
   width: 100%;
 }
 
@@ -350,12 +331,12 @@ onMounted(() => {
 
 .custom-input :deep(.el-input__wrapper:hover) {
   border-color: #c0c4cc;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
 }
 
 .custom-input :deep(.el-input__wrapper.is-focus) {
-  border-color: #409eff;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.25);
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
 }
 
 .input-icon {
@@ -389,8 +370,8 @@ onMounted(() => {
 }
 
 .captcha-image:hover {
-  border-color: #409eff;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
 }
 
 .captcha-image:hover .captcha-refresh {
@@ -440,103 +421,36 @@ onMounted(() => {
   }
 }
 
-/* 记住我选项样式 */
-.remember-me-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 5px;
-  padding-left: 4px;
-  margin-bottom: 8px;
-}
-
-.remember-me-text {
-  color: #52504e;
-  font-size: 13px;
-  font-weight: 450;
-  user-select: none;
-}
-
-.info-icon {
-  color: #575353;
-  font-size: 17px;
-  cursor: help;
-  transition: all 0.3s ease;
-}
-
-.info-icon:hover {
-  color: #409eff;
-  transform: scale(1.15);
-}
-
-/* 自定义复选框样式 */
-:deep(.el-checkbox) {
-  height: auto;
-}
-
-:deep(.el-checkbox__label) {
-  padding-left: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #303133;
-}
-
-:deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
-  background-color: #409eff;
-  border-color: #409eff;
-  border-width: 2.5px;
-}
-
-:deep(.el-checkbox__input.is-checked .el-checkbox__inner::after) {
-  border-width: 2px;
-  border-color: #fff;
-}
-
-:deep(.el-checkbox__inner) {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  border-width: 2.5px;
-  border-color: #606266;
-  transition: all 0.3s ease;
-}
-
-:deep(.el-checkbox__inner:hover) {
-  border-color: #409eff;
-  border-width: 2.5px;
-}
-
-.login-button {
+.admin-login-btn {
   width: 100%;
   height: 45px;
   border-radius: 10px;
   font-size: 16px;
   font-weight: 500;
   letter-spacing: 4px;
-  background: linear-gradient(135deg, #409eff 0%, #53a8ff 100%);
+  background: linear-gradient(135deg, #222326 0%, #351d4e 100%);
   border: none;
   transition: all 0.3s ease;
 }
 
-.login-button:hover {
+.admin-login-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(64, 158, 255, 0.4);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
 }
 
-.login-button:active {
+.admin-login-btn:active {
   transform: translateY(0);
 }
 
-.admin-login-hint {
+.back-link-wrapper {
   text-align: center;
-  margin-top: 15px;
 }
 
-.admin-link {
+.back-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #409eff;
+  color: #352636;
   text-decoration: none;
   font-size: 14px;
   transition: all 0.3s;
@@ -544,19 +458,19 @@ onMounted(() => {
   border-radius: 6px;
 }
 
-.admin-link:hover {
-  background: rgba(64, 158, 255, 0.1);
-  color: #66b1ff;
+.back-link:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: #764ba2;
 }
 
-.login-footer {
+.admin-footer {
   text-align: center;
   margin-top: 25px;
   padding-top: 20px;
   border-top: 1px solid #ebeef5;
 }
 
-.login-footer p {
+.admin-footer p {
   margin: 0;
   color: #909399;
   font-size: 12px;
@@ -564,12 +478,12 @@ onMounted(() => {
 
 /* 响应式适配 */
 @media (max-width: 480px) {
-  .login-box {
+  .admin-login-box {
     width: 90%;
     padding: 30px 25px;
   }
   
-  .login-title {
+  .admin-title {
     font-size: 22px;
   }
   
@@ -578,3 +492,4 @@ onMounted(() => {
   }
 }
 </style>
+

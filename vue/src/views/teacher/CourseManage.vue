@@ -64,7 +64,8 @@
       
       <el-table :data="tableData" v-loading="loading" stripe border
                 :header-cell-style="{ background: '#CCCCFF', color: '#606266', fontWeight: 'bold' }">
-        <el-table-column type="index" label="序号" width="70" align="center" />
+        <el-table-column type="index" label="序号" width="70" align="center" 
+                         :index="(index) => (queryForm.pageNum - 1) * queryForm.pageSize + index + 1" />
         <el-table-column prop="courseName" label="课程名称" min-width="150" />
         <el-table-column prop="credit" label="学分" width="80" align="center">
           <template #default="{ row }">
@@ -143,17 +144,10 @@
           </el-col>
         </el-row>
         <el-row :gutter="20">
-          <el-col :span="12">
+          <el-col :span="24">
             <el-form-item label="所属学院" prop="collegeId">
               <el-select v-model="form.collegeId" placeholder="请选择学院" style="width: 100%;">
                 <el-option v-for="c in collegeList" :key="c.id" :label="c.collegeName" :value="c.id" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="授课教师" prop="teacherId">
-              <el-select v-model="form.teacherId" placeholder="请选择教师" style="width: 100%;">
-                <el-option v-for="t in teacherList" :key="t.id" :label="t.name" :value="t.id" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -265,7 +259,7 @@
               <el-button :icon="FullScreen" @click="fitToScreen">适应窗口</el-button>
             </el-button-group>
             <span style="margin-left: 16px; color: #606266; font-weight: 500;">缩放: {{ imageZoom }}%</span>
-            <span style="margin-left: 16px; color: #909399; font-size: 12px;">范围: 5%-500% | 滚轮快速缩放</span>
+            <span style="margin-left: 16px; color: #909399; font-size: 12px;">范围: 5%-500%</span>
           </div>
           <div 
             class="image-preview-container" 
@@ -351,7 +345,6 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Reading, UploadFilled, View, Download, Delete, Document, Loading, ZoomIn, ZoomOut, FullScreen } from '@element-plus/icons-vue'
 import { getCoursePage, addCourse, updateCourse, deleteCourse } from '@/api/course'
 import { getCollegeList } from '@/api/college'
-import { getTeacherList } from '@/api/teacher'
 import { getAttachmentList, deleteAttachment, downloadAttachment } from '@/api/attachment'
 import vDialogResize from '@/directives/dialogResize'
 import { tokenStorage } from '@/utils/storage'
@@ -367,7 +360,6 @@ const tableData = ref([])
 const total = ref(0)
 const loading = ref(false)
 const collegeList = ref([])
-const teacherList = ref([])
 
 const dialogVisible = ref(false)
 const isEdit = ref(false)
@@ -412,7 +404,6 @@ const form = reactive({
   location: '',
   maxStudents: 100,
   collegeId: null,
-  teacherId: null,
   description: ''
 })
 
@@ -439,15 +430,6 @@ const loadColleges = async () => {
   try {
     const res = await getCollegeList()
     collegeList.value = res.data || []
-  } catch (e) {
-    console.error(e)
-  }
-}
-
-const loadTeachers = async () => {
-  try {
-    const res = await getTeacherList()
-    teacherList.value = res.data || []
   } catch (e) {
     console.error(e)
   }
@@ -526,7 +508,6 @@ const resetForm = () => {
   form.location = ''
   form.maxStudents = 100
   form.collegeId = null
-  form.teacherId = null
   form.description = ''
 }
 
@@ -624,12 +605,8 @@ const handlePreview = async (row) => {
     }
   }
   
-  // 记录下载次数
-  try {
-    await downloadAttachment(row.id)
-  } catch (e) {
-    console.error(e)
-  }
+  // ❌ 移除：预览时不应该增加下载次数
+  // 只有实际点击"下载"按钮时才增加下载次数
 }
 
 // 图片加载完成
@@ -642,14 +619,32 @@ const onImageLoad = (e) => {
   fitToScreen()
 }
 
-// 放大图片
+// 放大图片（优化缩放步长）
 const zoomIn = () => {
-  imageZoom.value = Math.min(imageZoom.value + 25, 500)
+  // 根据当前缩放级别使用不同的步长
+  let step
+  if (imageZoom.value < 30) {
+    step = 5  // 5% → 10% → 15% → 20% → 25% → 30%
+  } else if (imageZoom.value < 100) {
+    step = 10  // 30% → 40% → 50% → ... → 100%
+  } else {
+    step = 25  // 100% → 125% → 150% → ... → 500%
+  }
+  imageZoom.value = Math.min(imageZoom.value + step, 500)
 }
 
-// 缩小图片
+// 缩小图片（优化缩放步长）
 const zoomOut = () => {
-  imageZoom.value = Math.max(imageZoom.value - 25, 5)
+  // 根据当前缩放级别使用不同的步长
+  let step
+  if (imageZoom.value <= 30) {
+    step = 5  // 30% → 25% → 20% → 15% → 10% → 5%
+  } else if (imageZoom.value <= 100) {
+    step = 10  // 100% → 90% → 80% → ... → 30%
+  } else {
+    step = 25  // 500% → 475% → 450% → ... → 100%
+  }
+  imageZoom.value = Math.max(imageZoom.value - step, 5)
 }
 
 // 重置缩放
@@ -672,9 +667,19 @@ const fitToScreen = () => {
   imageZoom.value = Math.round(ratio * 100)
 }
 
-// 鼠标滚轮缩放
+// 鼠标滚轮缩放（优化步长）
 const handleWheel = (e) => {
-  const delta = e.deltaY > 0 ? -20 : 20
+  // 根据当前缩放级别使用不同的步长
+  let step
+  if (imageZoom.value < 30) {
+    step = 5  // 细粒度缩放：5%, 10%, 15%, 20%, 25%, 30%
+  } else if (imageZoom.value < 100) {
+    step = 10  // 中等粒度：30%, 40%, 50%, 60%, 70%, 80%, 90%, 100%
+  } else {
+    step = 20  // 较大粒度：100%, 120%, 140%, ..., 500%
+  }
+  
+  const delta = e.deltaY > 0 ? -step : step
   imageZoom.value = Math.max(5, Math.min(500, imageZoom.value + delta))
 }
 
@@ -769,7 +774,6 @@ const formatDate = (v) => {
 onMounted(() => {
   loadData()
   loadColleges()
-  loadTeachers()
 })
 </script>
 

@@ -1,13 +1,56 @@
 import request from '@/utils/request'
 
 /**
- * 获取通知列表
+ * 获取通知列表(用户端)
  */
 export function getNotificationList(params) {
   return request({
     url: '/notification/list',
     method: 'get',
     params
+  })
+}
+
+/**
+ * 获取所有公告(管理员端)
+ */
+export function getNotifications(params) {
+  return request({
+    url: '/notification/page',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 新增公告(管理员)
+ */
+export function addNotification(data) {
+  return request({
+    url: '/notification',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新公告(管理员)
+ */
+export function updateNotification(data) {
+  return request({
+    url: `/notification/${data.id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除公告(管理员)
+ */
+export function deleteNotificationApi(id) {
+  return request({
+    url: `/notification/${id}`,
+    method: 'delete'
   })
 }
 
@@ -40,3 +83,4 @@ export function markAllAsRead() {
     method: 'post'
   })
 }
+

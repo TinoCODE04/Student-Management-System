@@ -16,8 +16,13 @@
             <el-icon :size="60"><User /></el-icon>
           </el-avatar>
           <h2 class="user-name">{{ userStore.userInfo.name }}</h2>
-          <el-tag :type="userStore.isTeacher ? 'primary' : 'success'" effect="dark" size="large" round>
-            {{ userStore.isTeacher ? '教师' : '学生' }}
+          <el-tag 
+            :type="userStore.isTeacher ? 'primary' : (userStore.isAdmin ? 'danger' : 'success')" 
+            effect="dark" 
+            size="large" 
+            round
+          >
+            {{ userStore.isTeacher ? '教师' : (userStore.isAdmin ? '管理员' : '学生') }}
           </el-tag>
         </div>
         
@@ -40,8 +45,11 @@
               <template #label>
                 <el-icon><Stamp /></el-icon> 角色身份
               </template>
-              <el-tag :type="userStore.isTeacher ? 'primary' : 'success'" effect="light">
-                {{ userStore.isTeacher ? '教师' : '在校学生' }}
+              <el-tag 
+                :type="userStore.isTeacher ? 'primary' : (userStore.isAdmin ? 'danger' : 'success')" 
+                effect="light"
+              >
+                {{ userStore.isTeacher ? '教师' : (userStore.isAdmin ? '超级管理员' : '在校学生') }}
               </el-tag>
             </el-descriptions-item>
             <el-descriptions-item label-class-name="desc-label">
@@ -59,13 +67,13 @@
 
     <!-- 快捷操作区域 -->
     <div class="action-cards">
-      <el-card class="action-card" shadow="hover" @click="goToDetail">
+      <el-card class="action-card" shadow="hover" @click="goToDetail" v-if="!userStore.isAdmin">
         <el-icon :size="40" color="#409EFF"><Document /></el-icon>
         <h3>{{ userStore.isTeacher ? '教师信息' : '学生信息' }}</h3>
         <p>查看完整的个人详细信息</p>
       </el-card>
       
-      <el-card class="action-card" shadow="hover" @click="router.push('/password')">
+      <el-card class="action-card" shadow="hover" @click="goToPassword">
         <el-icon :size="40" color="#E6A23C"><Lock /></el-icon>
         <h3>修改密码</h3>
         <p>更新您的账户登录密码</p>
@@ -87,7 +95,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { 
@@ -96,6 +104,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/counter'
 import { logout } from '@/api/auth'
+import { getCurrentAdmin } from '@/api/admin'
 
 // 导入头像图片 - 学生头像
 import stu_ava1 from '@/assets/p1.jpeg'
@@ -113,9 +122,37 @@ import t_ava3 from '@/assets/t3.png'
 import t_ava4 from '@/assets/t4.png'
 import t_ava5 from '@/assets/t5.png'
 import t_ava6 from '@/assets/t6.png'
+// 导入头像图片 - 管理员头像
+import admin_ava1 from '@/assets/admin1.png'
+import admin_ava2 from '@/assets/admin2.jpg'
+import admin_ava3 from '@/assets/admin3.png'
 
 const router = useRouter()
 const userStore = useUserStore()
+
+// 初始化时，如果是管理员，加载完整的管理员信息
+onMounted(async () => {
+  if (userStore.isAdmin) {
+    try {
+      const res = await getCurrentAdmin()
+      if (res.code === 200 && res.data) {
+        // 更新userStore中的管理员信息
+        userStore.setUserInfo({
+          userId: res.data.id,
+          username: res.data.username,
+          name: res.data.name || res.data.username, // 如果没有name，使用username
+          role: res.data.role,
+          avatar: res.data.avatar,
+          gender: res.data.gender,
+          phone: res.data.phone,
+          email: res.data.email
+        }, userStore.rememberMe)
+      }
+    } catch (error) {
+      console.error('获取管理员信息失败:', error)
+    }
+  }
+})
 
 // 头像映射 - 学生
 const studentAvatarMap = {
@@ -139,8 +176,29 @@ const teacherAvatarMap = {
   6: t_ava6
 }
 
+// 头像映射 - 管理员（根据管理员ID分配头像）
+const adminAvatarMap = {
+  1: admin_ava1,
+  2: admin_ava2,
+  3: admin_ava3
+}
+
 // 计算用户头像
 const userAvatar = computed(() => {
+  // 管理员使用管理员头像
+  if (userStore.isAdmin) {
+    const adminId = userStore.userInfo.userId
+    if (adminId && adminAvatarMap[adminId]) {
+      return adminAvatarMap[adminId]
+    }
+    // 如果管理员ID超过3，循环使用头像
+    if (adminId) {
+      const index = ((adminId - 1) % 3) + 1
+      return adminAvatarMap[index]
+    }
+    // 默认使用第一个管理员头像
+    return admin_ava1
+  }
   // 教师使用教师头像
   if (userStore.isTeacher) {
     const teacherId = userStore.userInfo.userId
@@ -164,11 +222,25 @@ const userAvatar = computed(() => {
 const goToDetail = () => {
   if (userStore.isStudent) {
     router.push('/student/info')
+  } else if (userStore.isTeacher) {
+    router.push('/teacher/info')
+  }
+}
+
+const goToPassword = () => {
+  if (userStore.isAdmin) {
+    router.push('/admin/password')
+  } else {
+    router.push('/password')
   }
 }
 
 const goToDashboard = () => {
-  router.push('/dashboard')
+  if (userStore.isAdmin) {
+    router.push('/admin/dashboard')
+  } else {
+    router.push('/dashboard')
+  }
 }
 
 const handleLogout = () => {

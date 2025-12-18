@@ -37,7 +37,14 @@ public class StudentController {
      * 分页查询学生列表
      */
     @GetMapping("/page")
-    public Result<Page<Student>> page(StudentQueryDTO queryDTO) {
+    public Result<Page<Student>> page(StudentQueryDTO queryDTO,
+                                       @RequestAttribute(value = "userId", required = false) Long userId,
+                                       @RequestAttribute(value = "role", required = false) String role) {
+        // 如果是教师角色,只查询该教师教授的学生
+        if ("teacher".equals(role) && userId != null) {
+            queryDTO.setTeacherId(userId);
+        }
+        
         Page<Student> page = studentService.pageQuery(queryDTO);
         // 清除密码字段
         page.getRecords().forEach(s -> s.setPassword(null));
@@ -65,13 +72,13 @@ public class StudentController {
     }
     
     /**
-     * 新增学生
+     * 新增学生（管理员和教师）
      */
     @PostMapping
     public Result<Void> add(@RequestBody Student student,
                             @RequestAttribute("role") String role) {
-        // 只有教师可以添加学生
-        if (!"teacher".equals(role)) {
+        // 管理员和教师可以添加学生
+        if (!"teacher".equals(role) && !"admin".equals(role)) {
             return Result.forbidden("无权限操作");
         }
         
@@ -98,15 +105,15 @@ public class StudentController {
     }
     
     /**
-     * 更新学生
+     * 更新学生（管理员和教师可以修改任何学生，学生只能修改自己）
      */
     @PutMapping("/{id}")
     public Result<Void> update(@PathVariable Long id, 
                                @RequestBody Student student,
                                @RequestAttribute("role") String role,
                                @RequestAttribute("userId") Long userId) {
-        // 教师可以修改任何学生，学生只能修改自己
-        if (!"teacher".equals(role) && !id.equals(userId)) {
+        // 管理员和教师可以修改任何学生，学生只能修改自己
+        if (!"teacher".equals(role) && !"admin".equals(role) && !id.equals(userId)) {
             return Result.forbidden("无权限操作");
         }
         
@@ -119,13 +126,13 @@ public class StudentController {
     }
     
     /**
-     * 删除学生
+     * 删除学生（管理员和教师）
      */
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id,
                                @RequestAttribute("role") String role) {
-        // 只有教师可以删除学生
-        if (!"teacher".equals(role)) {
+        // 管理员和教师可以删除学生
+        if (!"teacher".equals(role) && !"admin".equals(role)) {
             return Result.forbidden("无权限操作");
         }
         

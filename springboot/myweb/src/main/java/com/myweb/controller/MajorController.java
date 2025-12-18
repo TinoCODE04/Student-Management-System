@@ -80,12 +80,12 @@ public class MajorController {
     }
     
     /**
-     * 新增专业（仅教师）
+     * 新增专业（管理员和教师）
      */
     @PostMapping
     public Result<Void> add(@RequestBody Major major,
                             @RequestAttribute("role") String role) {
-        if (!"teacher".equals(role)) {
+        if (!"teacher".equals(role) && !"admin".equals(role)) {
             return Result.forbidden("无权限操作");
         }
         majorService.save(major);
@@ -93,13 +93,13 @@ public class MajorController {
     }
     
     /**
-     * 更新专业（仅教师）
+     * 更新专业（管理员和教师）
      */
     @PutMapping("/{id}")
     public Result<Void> update(@PathVariable Long id, 
                                @RequestBody Major major,
                                @RequestAttribute("role") String role) {
-        if (!"teacher".equals(role)) {
+        if (!"teacher".equals(role) && !"admin".equals(role)) {
             return Result.forbidden("无权限操作");
         }
         major.setId(id);
@@ -108,12 +108,12 @@ public class MajorController {
     }
     
     /**
-     * 删除专业（仅教师）
+     * 删除专业（管理员和教师）
      */
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id,
                                @RequestAttribute("role") String role) {
-        if (!"teacher".equals(role)) {
+        if (!"teacher".equals(role) && !"admin".equals(role)) {
             return Result.forbidden("无权限操作");
         }
         majorService.removeById(id);

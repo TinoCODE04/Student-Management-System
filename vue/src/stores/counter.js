@@ -12,6 +12,7 @@ export const useUserStore = defineStore('user', () => {
   const isLoggedIn = computed(() => !!token.value)
   const isTeacher = computed(() => userInfo.value.role === 'teacher')
   const isStudent = computed(() => userInfo.value.role === 'student')
+  const isAdmin = computed(() => userInfo.value.role === 'admin')
   
   // 操作
   function setToken(newToken, remember = false) {
@@ -57,6 +58,7 @@ export const useUserStore = defineStore('user', () => {
     isLoggedIn,
     isTeacher,
     isStudent,
+    isAdmin,
     setToken,
     setUserInfo,
     setRememberMe,

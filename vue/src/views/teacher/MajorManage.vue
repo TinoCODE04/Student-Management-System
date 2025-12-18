@@ -37,16 +37,13 @@
         <div class="card-header">
           <span class="header-title">
             <el-icon><Reading /></el-icon>
-            专业管理
+            专业信息
           </span>
           <div class="header-actions">
-            <el-select v-model="selectedCollegeId" placeholder="按学院筛选" clearable style="width: 200px; margin-right: 12px;">
+            <el-select v-model="selectedCollegeId" placeholder="按学院筛选" clearable style="width: 200px;">
               <el-option label="全部学院" :value="null" />
               <el-option v-for="c in collegeList" :key="c.id" :label="c.collegeName" :value="c.id" />
             </el-select>
-            <el-button type="primary" @click="handleAdd">
-              <el-icon><Plus /></el-icon>新增专业
-            </el-button>
           </div>
         </div>
       </template>
@@ -75,62 +72,25 @@
             {{ row.teacherCount || 0 }} 人
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right" align="center">
-          <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
       </el-table>
     </el-card>
-    
-    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑专业' : '新增专业'" width="500px">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="专业名称" prop="majorName">
-          <el-input v-model="form.majorName" placeholder="请输入专业名称" />
-        </el-form-item>
-        <el-form-item label="系名" prop="departmentName">
-          <el-input v-model="form.departmentName" placeholder="请输入系名" />
-        </el-form-item>
-        <el-form-item label="所属学院" prop="collegeId">
-          <el-select v-model="form.collegeId" placeholder="请选择学院" style="width: 100%;">
-            <el-option v-for="c in collegeList" :key="c.id" :label="c.collegeName" :value="c.id" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">确定</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete, Reading, Notebook, OfficeBuilding } from '@element-plus/icons-vue'
-import { getMajorList, addMajor, updateMajor, deleteMajor } from '@/api/major'
+import { ref, computed, onMounted } from 'vue'
+import { Reading } from '@element-plus/icons-vue'
+import { getMajorList } from '@/api/major'
 import { getCollegeList } from '@/api/college'
 
 const tableData = ref([])
 const collegeList = ref([])
 const selectedCollegeId = ref(null)
 const loading = ref(false)
-const dialogVisible = ref(false)
-const isEdit = ref(false)
-const formRef = ref(null)
-const submitLoading = ref(false)
 
 // 统计数据
 const totalStudents = computed(() => tableData.value.reduce((sum, m) => sum + (m.studentCount || 0), 0))
 const totalTeachers = computed(() => tableData.value.reduce((sum, m) => sum + (m.teacherCount || 0), 0))
-
-const form = reactive({ id: null, majorName: '', departmentName: '', collegeId: null })
-const rules = {
-  majorName: [{ required: true, message: '请输入专业名称', trigger: 'blur' }],
-  collegeId: [{ required: true, message: '请选择学院', trigger: 'change' }]
-}
 
 const filteredData = computed(() => {
   if (!selectedCollegeId.value) return tableData.value
@@ -152,47 +112,6 @@ const loadData = async () => {
 const loadColleges = async () => {
   const res = await getCollegeList()
   collegeList.value = res.data || []
-}
-
-const handleAdd = () => {
-  isEdit.value = false
-  Object.assign(form, { id: null, majorName: '', departmentName: '', collegeId: null })
-  dialogVisible.value = true
-}
-
-const handleEdit = (row) => {
-  isEdit.value = true
-  Object.assign(form, row)
-  dialogVisible.value = true
-}
-
-const handleDelete = (row) => {
-  ElMessageBox.confirm(`确定删除专业 "${row.majorName}" 吗？`, '提示', { type: 'warning' })
-    .then(async () => {
-      await deleteMajor(row.id)
-      ElMessage.success('删除成功')
-      loadData()
-    }).catch(() => {})
-}
-
-const handleSubmit = async () => {
-  await formRef.value.validate(async (valid) => {
-    if (!valid) return
-    submitLoading.value = true
-    try {
-      if (isEdit.value) {
-        await updateMajor(form.id, form)
-        ElMessage.success('更新成功')
-      } else {
-        await addMajor(form)
-        ElMessage.success('新增成功')
-      }
-      dialogVisible.value = false
-      loadData()
-    } finally {
-      submitLoading.value = false
-    }
-  })
 }
 
 onMounted(() => { loadData(); loadColleges() })

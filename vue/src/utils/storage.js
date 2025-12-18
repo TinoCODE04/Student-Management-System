@@ -139,6 +139,12 @@ export const tokenStorage = {
     const storageType = rememberMe ? 'localStorage' : 'sessionStorage'
     const storageInstance = storageType === 'localStorage' ? localStorage : sessionStorage
     
+    // 清除另一个存储中的旧数据，确保不冲突
+    const otherStorage = storageType === 'localStorage' ? sessionStorage : localStorage
+    otherStorage.removeItem('token')
+    otherStorage.removeItem('tokenExpiry')
+    otherStorage.removeItem('storageType')
+    
     if (rememberMe) {
       // 勾选"记住我"时，保存token和过期时间
       // 计算过期时间：当前时间 + 配置的天数
@@ -156,7 +162,13 @@ export const tokenStorage = {
     }
   },
   get() {
-    // 优先从 localStorage 获取
+    // 先检查 sessionStorage（当前标签页独立的登录）
+    const sessionToken = sessionStorage.getItem('token')
+    if (sessionToken) {
+      return sessionToken
+    }
+    
+    // 再检查 localStorage（"记住我"的登录）
     const localToken = localStorage.getItem('token')
     if (localToken) {
       // 检查是否过期
@@ -177,8 +189,7 @@ export const tokenStorage = {
       return localToken
     }
     
-    // 从 sessionStorage 获取
-    return sessionStorage.getItem('token') || ''
+    return ''
   },
   remove() {
     localStorage.removeItem('token')
@@ -207,26 +218,42 @@ export const userInfoStorage = {
   set(userInfo, rememberMe = false) {
     const storageType = rememberMe ? 'localStorage' : 'sessionStorage'
     const storageInstance = storageType === 'localStorage' ? localStorage : sessionStorage
+    
+    // 清除另一个存储中的旧数据，确保不冲突
+    const otherStorage = storageType === 'localStorage' ? sessionStorage : localStorage
+    otherStorage.removeItem('userInfo')
+    
     storageInstance.setItem('userInfo', JSON.stringify(userInfo))
   },
   get() {
-    // 优先从 localStorage 获取，如果没有再从 sessionStorage 获取
-    const localValue = localStorage.getItem('userInfo')
+    // 优先从当前标签页的 sessionStorage 获取
     const sessionValue = sessionStorage.getItem('userInfo')
-    const value = localValue || sessionValue
-    if (!value) return {}
-    try {
-      return JSON.parse(value)
-    } catch {
-      return {}
+    if (sessionValue) {
+      try {
+        return JSON.parse(sessionValue)
+      } catch {
+        return {}
+      }
     }
+    
+    // 如果没有，再从 localStorage 获取（"记住我"的情况）
+    const localValue = localStorage.getItem('userInfo')
+    if (localValue) {
+      try {
+        return JSON.parse(localValue)
+      } catch {
+        return {}
+      }
+    }
+    
+    return {}
   },
   remove() {
     localStorage.removeItem('userInfo')
     sessionStorage.removeItem('userInfo')
   },
   has() {
-    return !!(localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo'))
+    return !!(sessionStorage.getItem('userInfo') || localStorage.getItem('userInfo'))
   }
 }
 

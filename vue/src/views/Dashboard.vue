@@ -215,7 +215,7 @@ const loginStatusMessage = computed(() => {
   const remainingDays = tokenStorage.getRemainingDays()
   if (remainingDays === null) {
     // 未勾选"记住我"，使用sessionStorage
-    return '会话登录中（关闭标签页后需重新登录）'
+    return '登录中（关闭标签页后需重新登录）'
   } else if (remainingDays > 0) {
     // 勾选了"记住我"，显示剩余天数
     return `已记住登录状态，还剩 ${remainingDays} 天有效期`

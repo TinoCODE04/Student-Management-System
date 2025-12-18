@@ -46,7 +46,14 @@ public class CourseController {
      * 分页查询课程
      */
     @GetMapping("/page")
-    public Result<Page<Course>> page(CourseQueryDTO queryDTO) {
+    public Result<Page<Course>> page(CourseQueryDTO queryDTO,
+                                     @RequestAttribute(value = "userId", required = false) Long userId,
+                                     @RequestAttribute(value = "role", required = false) String role) {
+        // 如果是教师角色，只能查看自己的课程
+        if ("teacher".equals(role) && userId != null) {
+            queryDTO.setTeacherId(userId);
+        }
+        
         Page<Course> pageResult = courseService.pageQuery(queryDTO);
         // 填充教师信息和实时选课人数
         for (Course course : pageResult.getRecords()) {
@@ -105,13 +112,18 @@ public class CourseController {
     }
     
     /**
-     * 新增课程（仅教师）
+     * 新增课程（管理员和教师）
      */
     @PostMapping
     public Result<Void> add(@RequestBody Course course,
+                            @RequestAttribute("userId") Long userId,
                             @RequestAttribute("role") String role) {
-        if (!"teacher".equals(role)) {
+        if (!"teacher".equals(role) && !"admin".equals(role)) {
             return Result.forbidden("无权限操作");
+        }
+        // 管理员可以指定任何教师，教师只能设置自己为授课教师
+        if ("teacher".equals(role)) {
+            course.setTeacherId(userId);
         }
         course.setSelectedCount(0);
         courseService.save(course);
@@ -119,29 +131,59 @@ public class CourseController {
     }
     
     /**
-     * 更新课程（仅教师）
+     * 更新课程（管理员和教师）
      */
     @PutMapping("/{id}")
     public Result<Void> update(@PathVariable Long id, 
                                @RequestBody Course course,
+                               @RequestAttribute("userId") Long userId,
                                @RequestAttribute("role") String role) {
-        if (!"teacher".equals(role)) {
+        if (!"teacher".equals(role) && !"admin".equals(role)) {
             return Result.forbidden("无权限操作");
         }
+        
+        // 验证课程是否存在
+        Course existingCourse = courseService.getById(id);
+        if (existingCourse == null) {
+            return Result.error("课程不存在");
+        }
+        
+        // 教师只能修改自己的课程，管理员可以修改所有课程
+        if ("teacher".equals(role) && !existingCourse.getTeacherId().equals(userId)) {
+            return Result.forbidden("您只能修改自己的课程");
+        }
+        
         course.setId(id);
+        // 教师不能修改授课教师，管理员可以
+        if ("teacher".equals(role)) {
+            course.setTeacherId(userId);
+        }
         courseService.updateById(course);
         return Result.success();
     }
     
     /**
-     * 删除课程（仅教师）
+     * 删除课程（管理员和教师）
      */
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id,
+                               @RequestAttribute("userId") Long userId,
                                @RequestAttribute("role") String role) {
-        if (!"teacher".equals(role)) {
+        if (!"teacher".equals(role) && !"admin".equals(role)) {
             return Result.forbidden("无权限操作");
         }
+        
+        // 验证课程是否存在
+        Course existingCourse = courseService.getById(id);
+        if (existingCourse == null) {
+            return Result.error("课程不存在");
+        }
+        
+        // 教师只能删除自己的课程，管理员可以删除所有课程
+        if ("teacher".equals(role) && !existingCourse.getTeacherId().equals(userId)) {
+            return Result.forbidden("您只能删除自己的课程");
+        }
+        
         courseService.removeById(id);
         return Result.success();
     }

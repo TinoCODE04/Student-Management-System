@@ -4,8 +4,10 @@ import com.myweb.common.Result;
 import com.myweb.dto.LoginDTO;
 import com.myweb.dto.LoginVO;
 import com.myweb.dto.PasswordDTO;
+import com.myweb.entity.Admin;
 import com.myweb.entity.Student;
 import com.myweb.entity.Teacher;
+import com.myweb.service.AdminService;
 import com.myweb.service.AuthService;
 import com.myweb.service.StudentService;
 import com.myweb.service.TeacherService;
@@ -32,6 +34,9 @@ public class AuthController {
     
     @Autowired
     private TeacherService teacherService;
+    
+    @Autowired
+    private AdminService adminService;
     
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     
@@ -86,6 +91,27 @@ public class AuthController {
         
         String currentPassword;
         
+        // 管理员修改密码
+        if ("admin".equals(role)) {
+            Admin admin = adminService.getById(userId);
+            if (admin == null) {
+                return Result.error("用户不存在");
+            }
+            currentPassword = admin.getPassword();
+            
+            // 验证旧密码
+            if (!passwordEncoder.matches(passwordDTO.getOldPassword(), currentPassword)) {
+                return Result.error("原密码错误");
+            }
+            
+            // 更新新密码
+            admin.setPassword(passwordEncoder.encode(passwordDTO.getNewPassword()));
+            adminService.updateById(admin);
+            
+            return Result.success("密码修改成功", null);
+        }
+        
+        // 学生修改密码
         if ("student".equals(role)) {
             Student student = studentService.getById(userId);
             if (student == null) {
@@ -101,7 +127,12 @@ public class AuthController {
             // 更新新密码
             student.setPassword(passwordEncoder.encode(passwordDTO.getNewPassword()));
             studentService.updateById(student);
-        } else {
+            
+            return Result.success("密码修改成功", null);
+        }
+        
+        // 教师修改密码
+        if ("teacher".equals(role)) {
             Teacher teacher = teacherService.getById(userId);
             if (teacher == null) {
                 return Result.error("用户不存在");
@@ -116,9 +147,11 @@ public class AuthController {
             // 更新新密码
             teacher.setPassword(passwordEncoder.encode(passwordDTO.getNewPassword()));
             teacherService.updateById(teacher);
+            
+            return Result.success("密码修改成功", null);
         }
         
-        return Result.success("密码修改成功", null);
+        return Result.error("角色错误");
     }
     
     /**

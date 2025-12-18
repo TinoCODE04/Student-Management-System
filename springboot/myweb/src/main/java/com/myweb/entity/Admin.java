@@ -5,11 +5,11 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 教师实体类
+ * 管理员实体类
  */
 @Data
-@TableName("teacher")
-public class Teacher {
+@TableName("admin")
+public class Admin {
     
     @TableId(type = IdType.AUTO)
     private Long id;
@@ -33,16 +33,6 @@ public class Teacher {
      * 性别
      */
     private String gender;
-    
-    /**
-     * 职称
-     */
-    private String title;
-    
-    /**
-     * 所属专业ID
-     */
-    private Long majorId;
     
     /**
      * 角色
@@ -80,10 +70,4 @@ public class Teacher {
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
-    
-    /**
-     * 所属专业（非数据库字段）
-     */
-    @TableField(exist = false)
-    private Major major;
 }

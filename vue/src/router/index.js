@@ -8,6 +8,12 @@ const publicRoutes = [
     name: 'Login',
     component: () => import('@/views/Login.vue'),
     meta: { title: '登录', public: true }
+  },
+  {
+    path: '/admin/login',
+    name: 'AdminLogin',
+    component: () => import('@/views/AdminLogin.vue'),
+    meta: { title: '管理员登录', public: true }
   }
 ]
 
@@ -41,13 +47,13 @@ const teacherRoutes = [
     path: '/teacher/colleges',
     name: 'TeacherColleges',
     component: () => import('@/views/teacher/CollegeManage.vue'),
-    meta: { title: '学院管理', role: 'teacher' }
+    meta: { title: '学院信息', role: 'teacher' }
   },
   {
     path: '/teacher/majors',
     name: 'TeacherMajors',
     component: () => import('@/views/teacher/MajorManage.vue'),
-    meta: { title: '专业管理', role: 'teacher' }
+    meta: { title: '专业信息', role: 'teacher' }
   }
 ]
 
@@ -91,6 +97,77 @@ const studentRoutes = [
   }
 ]
 
+// 管理员路由
+const adminRoutes = [
+  {
+    path: '/admin',
+    component: () => import('@/views/admin/AdminLayout.vue'),
+    meta: { requiresAuth: true, role: 'admin' },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'AdminDashboard',
+        component: () => import('@/views/admin/Dashboard.vue'),
+        meta: { title: '系统概览', role: 'admin' }
+      },
+      {
+        path: 'admins',
+        name: 'AdminManage',
+        component: () => import('@/views/admin/AdminManage.vue'),
+        meta: { title: '管理员管理', role: 'admin' }
+      },
+      {
+        path: 'teachers',
+        name: 'AdminTeachers',
+        component: () => import('@/views/admin/TeacherManage.vue'),
+        meta: { title: '教师管理', role: 'admin' }
+      },
+      {
+        path: 'students',
+        name: 'AdminStudents',
+        component: () => import('@/views/teacher/StudentManage.vue'),
+        meta: { title: '学生管理', role: 'admin' }
+      },
+      {
+        path: 'colleges',
+        name: 'AdminColleges',
+        component: () => import('@/views/admin/CollegeManage.vue'),
+        meta: { title: '学院管理', role: 'admin' }
+      },
+      {
+        path: 'majors',
+        name: 'AdminMajors',
+        component: () => import('@/views/admin/MajorManage.vue'),
+        meta: { title: '专业管理', role: 'admin' }
+      },
+      {
+        path: 'courses',
+        name: 'AdminCourses',
+        component: () => import('@/views/teacher/CourseManage.vue'),
+        meta: { title: '课程管理', role: 'admin' }
+      },
+      {
+        path: 'notifications',
+        name: 'AdminNotifications',
+        component: () => import('@/views/admin/AnnouncementManage.vue'),
+        meta: { title: '系统公告', role: 'admin' }
+      },
+      {
+        path: 'profile',
+        name: 'AdminProfile',
+        component: () => import('@/views/Profile.vue'),
+        meta: { title: '个人信息', role: 'admin' }
+      },
+      {
+        path: 'password',
+        name: 'AdminPassword',
+        component: () => import('@/views/Password.vue'),
+        meta: { title: '修改密码', role: 'admin' }
+      }
+    ]
+  }
+]
+
 // 共享路由（教师和学生都可以访问）
 const sharedRoutes = [
   {
@@ -113,6 +190,7 @@ const routes = [
     redirect: '/login'
   },
   ...publicRoutes,
+  ...adminRoutes,
   {
     path: '/',
     component: () => import('@/views/Layout.vue'),
@@ -153,7 +231,17 @@ router.beforeEach((to, from, next) => {
   
   // 已登录用户访问登录页，跳转到首页
   if (to.path === '/login' && token) {
-    next('/dashboard')
+    if (role === 'admin') {
+      next('/admin/dashboard')
+    } else {
+      next('/dashboard')
+    }
+    return
+  }
+  
+  // 管理员访问普通登录页，跳转到管理员登录
+  if (to.path === '/login' && !token) {
+    next()
     return
   }
   
@@ -165,15 +253,23 @@ router.beforeEach((to, from, next) => {
   
   // 未登录跳转到登录页
   if (!token) {
-    next('/login')
+    if (to.path.startsWith('/admin')) {
+      next('/admin/login')
+    } else {
+      next('/login')
+    }
     return
   }
   
   // 检查角色权限
   if (to.meta.role) {
     if (to.meta.role !== role) {
-      // 无权限访问，跳转到首页
-      next('/dashboard')
+      // 无权限访问，跳转到相应首页
+      if (role === 'admin') {
+        next('/admin/dashboard')
+      } else {
+        next('/dashboard')
+      }
       return
     }
   }

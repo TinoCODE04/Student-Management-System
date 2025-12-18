@@ -1,6 +1,7 @@
 package com.myweb.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.myweb.dto.StudentQueryDTO;
@@ -10,6 +11,8 @@ import com.myweb.service.StudentService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
+import java.time.LocalDateTime;
 
 /**
  * 学生Service实现类
@@ -34,6 +37,14 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
         Page<Student> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
         
         LambdaQueryWrapper<Student> wrapper = new LambdaQueryWrapper<>();
+        
+        // 如果是教师查询,只查询选了该教师课程的学生
+        if (queryDTO.getTeacherId() != null) {
+            // 使用子查询获取选了该教师课程的学生ID列表
+            wrapper.inSql(Student::getId, 
+                "SELECT DISTINCT student_id FROM course_selection WHERE course_id IN " +
+                "(SELECT id FROM course WHERE teacher_id = " + queryDTO.getTeacherId() + ")");
+        }
         
         // 姓名模糊查询
         if (StringUtils.hasText(queryDTO.getName())) {
@@ -86,8 +97,12 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
             return false;
         }
         
-        // 更新新密码
-        student.setPassword(passwordEncoder.encode(newPassword));
-        return this.updateById(student);
+        // 使用 UpdateWrapper 确保 update_time 被更新
+        LambdaUpdateWrapper<Student> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(Student::getId, id)
+                    .set(Student::getPassword, passwordEncoder.encode(newPassword))
+                    .set(Student::getUpdateTime, LocalDateTime.now());
+        
+        return this.update(updateWrapper);
     }
 }

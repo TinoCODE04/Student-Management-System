@@ -5,8 +5,10 @@ import cn.hutool.core.util.IdUtil;
 import com.google.code.kaptcha.Producer;
 import com.myweb.dto.LoginDTO;
 import com.myweb.dto.LoginVO;
+import com.myweb.entity.Admin;
 import com.myweb.entity.Student;
 import com.myweb.entity.Teacher;
+import com.myweb.service.AdminService;
 import com.myweb.service.AuthService;
 import com.myweb.service.StudentService;
 import com.myweb.service.TeacherService;
@@ -33,6 +35,9 @@ public class AuthServiceImpl implements AuthService {
     private TeacherService teacherService;
     
     @Autowired
+    private AdminService adminService;
+    
+    @Autowired
     private JwtUtil jwtUtil;
     
     @Autowired
@@ -53,9 +58,40 @@ public class AuthServiceImpl implements AuthService {
         String username = loginDTO.getUsername();
         String password = loginDTO.getPassword();
         
-        // 先尝试从教师表查询
+        // 1. 先尝试从管理员表查询
+        Admin admin = adminService.getByUsername(username);
+        if (admin != null) {
+            // 检查账号状态
+            if ("disabled".equals(admin.getStatus())) {
+                throw new RuntimeException("账号已被禁用，请联系管理员");
+            }
+            
+            if (!passwordEncoder.matches(password, admin.getPassword())) {
+                throw new RuntimeException("密码错误");
+            }
+            
+            // 生成JWT
+            String token = jwtUtil.generateToken(admin.getId(), admin.getUsername(), admin.getRole());
+            
+            LoginVO vo = new LoginVO();
+            vo.setToken(token);
+            vo.setUserId(admin.getId());
+            vo.setUsername(admin.getUsername());
+            vo.setName(admin.getName());
+            vo.setRole(admin.getRole());
+            vo.setAvatar(admin.getAvatar());
+            
+            return vo;
+        }
+        
+        // 2. 尝试从教师表查询
         Teacher teacher = teacherService.getByUsername(username);
         if (teacher != null) {
+            // 检查账号状态
+            if ("disabled".equals(teacher.getStatus())) {
+                throw new RuntimeException("账号已被禁用，请联系管理员");
+            }
+            
             if (!passwordEncoder.matches(password, teacher.getPassword())) {
                 throw new RuntimeException("密码错误");
             }
@@ -74,9 +110,14 @@ public class AuthServiceImpl implements AuthService {
             return vo;
         }
         
-        // 从学生表查询
+        // 3. 从学生表查询
         Student student = studentService.getByUsername(username);
         if (student != null) {
+            // 检查账号状态
+            if ("disabled".equals(student.getStatus())) {
+                throw new RuntimeException("账号已被禁用，请联系管理员");
+            }
+            
             if (!passwordEncoder.matches(password, student.getPassword())) {
                 throw new RuntimeException("密码错误");
             }

@@ -1,5 +1,14 @@
 import request from '@/utils/request'
 
+// 分页查询教师
+export function getTeacherPage(params) {
+  return request({
+    url: '/teacher/page',
+    method: 'get',
+    params
+  })
+}
+
 // 获取教师列表
 export function getTeacherList() {
   return request({
@@ -13,6 +22,32 @@ export function getTeacherById(id) {
   return request({
     url: `/teacher/${id}`,
     method: 'get'
+  })
+}
+
+// 新增教师
+export function addTeacher(data) {
+  return request({
+    url: '/teacher',
+    method: 'post',
+    data
+  })
+}
+
+// 更新教师
+export function updateTeacher(id, data) {
+  return request({
+    url: `/teacher/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+// 删除教师
+export function deleteTeacher(id) {
+  return request({
+    url: `/teacher/${id}`,
+    method: 'delete'
   })
 }
 

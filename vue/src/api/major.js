@@ -1,10 +1,11 @@
 import request from '@/utils/request'
 
 // 获取专业列表
-export function getMajorList() {
+export function getMajorList(params) {
   return request({
     url: '/major/list',
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 

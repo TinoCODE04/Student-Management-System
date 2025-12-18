@@ -69,12 +69,12 @@ public class CollegeController {
     }
     
     /**
-     * 新增学院（仅教师）
+     * 新增学院（管理员和教师）
      */
     @PostMapping
     public Result<Void> add(@RequestBody College college,
                             @RequestAttribute("role") String role) {
-        if (!"teacher".equals(role)) {
+        if (!"teacher".equals(role) && !"admin".equals(role)) {
             return Result.forbidden("无权限操作");
         }
         collegeService.save(college);
@@ -82,13 +82,13 @@ public class CollegeController {
     }
     
     /**
-     * 更新学院（仅教师）
+     * 更新学院（管理员和教师）
      */
     @PutMapping("/{id}")
     public Result<Void> update(@PathVariable Long id, 
                                @RequestBody College college,
                                @RequestAttribute("role") String role) {
-        if (!"teacher".equals(role)) {
+        if (!"teacher".equals(role) && !"admin".equals(role)) {
             return Result.forbidden("无权限操作");
         }
         college.setId(id);
@@ -97,12 +97,12 @@ public class CollegeController {
     }
     
     /**
-     * 删除学院（仅教师）
+     * 删除学院（管理员和教师）
      */
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id,
                                @RequestAttribute("role") String role) {
-        if (!"teacher".equals(role)) {
+        if (!"teacher".equals(role) && !"admin".equals(role)) {
             return Result.forbidden("无权限操作");
         }
         collegeService.removeById(id);

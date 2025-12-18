@@ -29,6 +29,11 @@ public class StudentQueryDTO {
     private Long collegeId;
     
     /**
+     * 教师ID（用于查询该教师教授的学生）
+     */
+    private Long teacherId;
+    
+    /**
      * 当前页
      */
     private Integer pageNum = 1;

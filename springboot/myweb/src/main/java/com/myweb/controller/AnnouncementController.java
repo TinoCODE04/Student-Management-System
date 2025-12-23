@@ -109,8 +109,34 @@ public class AnnouncementController {
             return Result.forbidden("无权限操作");
         }
         
+        // 1. 删除公告
         boolean success = announcementService.deleteAnnouncement(id);
-        return success ? Result.success("删除成功") : Result.error("删除失败");
+        
+        if (success) {
+            // 2. 删除所有相关的通知
+            deleteRelatedNotifications(id);
+            return Result.success("删除成功");
+        }
+        
+        return Result.error("删除失败");
+    }
+    
+    /**
+     * 删除与公告相关的所有通知
+     */
+    private void deleteRelatedNotifications(Long announcementId) {
+        try {
+            // 删除所有 type="announcement" 且 relatedId=公告ID 的通知
+            notificationService.lambdaUpdate()
+                .eq(Notification::getType, "announcement")
+                .eq(Notification::getRelatedId, announcementId)
+                .remove();
+            
+            System.out.println("✅ 已删除公告 ID=" + announcementId + " 的所有相关通知");
+        } catch (Exception e) {
+            System.err.println("❌ 删除通知失败: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     /**
@@ -129,7 +155,8 @@ public class AnnouncementController {
                         student.getId(), 
                         "student", 
                         announcement.getTitle(), 
-                        announcement.getContent()
+                        announcement.getContent(),
+                        announcement.getId()  // 传入公告ID
                     );
                 }
                 System.out.println("✅ 已为 " + students.size() + " 个学生创建通知");
@@ -143,7 +170,8 @@ public class AnnouncementController {
                         teacher.getId(), 
                         "teacher", 
                         announcement.getTitle(), 
-                        announcement.getContent()
+                        announcement.getContent(),
+                        announcement.getId()  // 传入公告ID
                     );
                 }
                 System.out.println("✅ 已为 " + teachers.size() + " 个教师创建通知");
@@ -154,6 +182,7 @@ public class AnnouncementController {
             wsNotification.setTitle(announcement.getTitle());
             wsNotification.setContent(announcement.getContent());
             wsNotification.setType("announcement");
+            wsNotification.setRelatedId(announcement.getId());  // 设置关联ID
             wsNotification.setCreateTime(LocalDateTime.now());
             
             webSocketServer.sendNotification(wsNotification);
@@ -169,13 +198,14 @@ public class AnnouncementController {
     /**
      * 为单个用户创建通知记录
      */
-    private void createNotificationForUser(Long userId, String userType, String title, String content) {
+    private void createNotificationForUser(Long userId, String userType, String title, String content, Long announcementId) {
         Notification notification = new Notification();
         notification.setUserId(userId);
         notification.setUserType(userType);
         notification.setTitle(title);
         notification.setContent(content);
         notification.setType("announcement");
+        notification.setRelatedId(announcementId);  // 关联公告ID
         notification.setStatus(0); // 未读
         notification.setCreateTime(LocalDateTime.now());
         notification.setUpdateTime(LocalDateTime.now());

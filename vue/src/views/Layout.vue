@@ -41,11 +41,11 @@
           </el-menu-item>
           <el-menu-item index="/teacher/colleges">
             <el-icon><School /></el-icon>
-            <span>学院管理</span>
+            <span>学院信息</span>
           </el-menu-item>
           <el-menu-item index="/teacher/majors">
             <el-icon><Collection /></el-icon>
-            <span>专业管理</span>
+            <span>专业信息</span>
           </el-menu-item>
         </template>
         

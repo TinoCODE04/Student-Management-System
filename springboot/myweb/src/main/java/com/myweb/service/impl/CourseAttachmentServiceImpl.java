@@ -2,15 +2,22 @@ package com.myweb.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.myweb.document.CourseAttachmentDocument;
+import com.myweb.entity.Admin;
+import com.myweb.entity.Course;
 import com.myweb.entity.CourseAttachment;
 import com.myweb.entity.Student;
 import com.myweb.entity.Teacher;
 import com.myweb.mapper.CourseAttachmentMapper;
+import com.myweb.mapper.CourseMapper;
+import com.myweb.service.AdminService;
+import com.myweb.service.AttachmentSearchService;
 import com.myweb.service.CourseAttachmentService;
 import com.myweb.service.MinioService;
 import com.myweb.service.StudentService;
 import com.myweb.service.TeacherService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +42,15 @@ public class CourseAttachmentServiceImpl extends ServiceImpl<CourseAttachmentMap
     @Autowired
     private StudentService studentService;
     
+    @Autowired
+    private AdminService adminService;
+    
+    @Autowired
+    private AttachmentSearchService attachmentSearchService;
+    
+    @Autowired
+    private CourseMapper courseMapper;
+    
     @Override
     @Transactional
     public CourseAttachment uploadAttachment(Long courseId, MultipartFile file, Long uploaderId, 
@@ -58,6 +74,16 @@ public class CourseAttachmentServiceImpl extends ServiceImpl<CourseAttachmentMap
             attachment.setDownloadCount(0);
             
             save(attachment);
+            
+            // 同步到Elasticsearch
+            try {
+                CourseAttachmentDocument document = convertToDocument(attachment);
+                attachmentSearchService.indexAttachment(document);
+                log.info("Attachment indexed to Elasticsearch successfully");
+            } catch (Exception e) {
+                log.error("Failed to index attachment to Elasticsearch", e);
+                // 不影响主流程，只记录错误
+            }
             
             log.info("Attachment uploaded successfully: courseId={}, filename={}", courseId, file.getOriginalFilename());
             return attachment;
@@ -90,6 +116,11 @@ public class CourseAttachmentServiceImpl extends ServiceImpl<CourseAttachmentMap
                 if (student != null) {
                     attachment.setUploaderName(student.getName());
                 }
+            } else if ("admin".equals(attachment.getUploaderType())) {
+                Admin admin = adminService.getById(attachment.getUploaderId());
+                if (admin != null) {
+                    attachment.setUploaderName(admin.getName());
+                }
             }
         }
         
@@ -116,6 +147,14 @@ public class CourseAttachmentServiceImpl extends ServiceImpl<CourseAttachmentMap
             log.error("Error deleting file from MinIO", e);
         }
         
+        // 从Elasticsearch删除索引
+        try {
+            attachmentSearchService.deleteAttachment(id);
+            log.info("Attachment deleted from Elasticsearch successfully");
+        } catch (Exception e) {
+            log.error("Failed to delete attachment from Elasticsearch", e);
+        }
+        
         // 删除数据库记录
         return removeById(id);
     }
@@ -126,6 +165,48 @@ public class CourseAttachmentServiceImpl extends ServiceImpl<CourseAttachmentMap
         if (attachment != null) {
             attachment.setDownloadCount(attachment.getDownloadCount() + 1);
             updateById(attachment);
+            
+            // 更新Elasticsearch中的下载次数
+            try {
+                CourseAttachmentDocument document = convertToDocument(attachment);
+                attachmentSearchService.updateAttachment(document);
+            } catch (Exception e) {
+                log.error("Failed to update attachment in Elasticsearch", e);
+            }
         }
+    }
+    
+    /**
+     * 将CourseAttachment转换为Elasticsearch文档
+     */
+    private CourseAttachmentDocument convertToDocument(CourseAttachment attachment) {
+        CourseAttachmentDocument document = new CourseAttachmentDocument();
+        BeanUtils.copyProperties(attachment, document);
+        
+        // 补充课程名称
+        Course course = courseMapper.selectById(attachment.getCourseId());
+        if (course != null) {
+            document.setCourseName(course.getCourseName());
+        }
+        
+        // 补充上传者姓名
+        if ("teacher".equals(attachment.getUploaderType())) {
+            Teacher teacher = teacherService.getById(attachment.getUploaderId());
+            if (teacher != null) {
+                document.setUploaderName(teacher.getName());
+            }
+        } else if ("student".equals(attachment.getUploaderType())) {
+            Student student = studentService.getById(attachment.getUploaderId());
+            if (student != null) {
+                document.setUploaderName(student.getName());
+            }
+        } else if ("admin".equals(attachment.getUploaderType())) {
+            Admin admin = adminService.getById(attachment.getUploaderId());
+            if (admin != null) {
+                document.setUploaderName(admin.getName());
+            }
+        }
+        
+        return document;
     }
 }

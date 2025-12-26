@@ -152,13 +152,13 @@ export const tokenStorage = {
       storageInstance.setItem('token', token)
       storageInstance.setItem('tokenExpiry', expiryTime.toString())
       storageInstance.setItem('storageType', storageType)
-      console.log(`✅ 记住我：已保存登录状态，${REMEMBER_ME_DAYS}天内有效`)
-      console.log('📅 过期时间：', new Date(expiryTime).toLocaleString())
+      console.log(`记住我：已保存登录状态，${REMEMBER_ME_DAYS}天内有效`)
+      console.log('过期时间：', new Date(expiryTime).toLocaleString())
     } else {
       // 不勾选时，只保存token，不设置过期时间
       storageInstance.setItem('token', token)
       storageInstance.setItem('storageType', storageType)
-      console.log('⏱️  会话登录：关闭标签页后需重新登录')
+      console.log('会话登录：关闭标签页后需重新登录')
     }
   },
   get() {
@@ -178,13 +178,13 @@ export const tokenStorage = {
         const now = Date.now()
         if (now > expiry) {
           // 已过期，清除token
-          console.log('⚠️  登录已过期（超过7天），请重新登录')
+          console.log('登录已过期（超过7天），请重新登录')
           this.remove()
           return ''
         }
         // 计算剩余天数
         const remainingDays = Math.ceil((expiry - now) / (24 * 60 * 60 * 1000))
-        console.log(`✅ 登录有效，还剩 ${remainingDays} 天`)
+        console.log(`登录有效，还剩 ${remainingDays} 天`)
       }
       return localToken
     }

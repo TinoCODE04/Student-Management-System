@@ -28,7 +28,7 @@ class WebSocketClient {
       this.ws = new WebSocket(wsUrl)
 
       this.ws.onopen = () => {
-        console.log('✅ WebSocket 连接成功! userId:', userId)
+        console.log('WebSocket 连接成功! userId:', userId)
         this.startHeartbeat()
       }
 
@@ -42,21 +42,21 @@ class WebSocketClient {
             handler(data)
           })
         } catch (error) {
-          console.error('❌ 解析消息失败:', error, '原始消息:', event.data)
+          console.error('解析消息失败:', error, '原始消息:', event.data)
         }
       }
 
       this.ws.onerror = (error) => {
-        console.error('❌ WebSocket 错误:', error)
+        console.error('WebSocket 错误:', error)
       }
 
       this.ws.onclose = (event) => {
-        console.log('⚠️ WebSocket 连接关闭, code:', event.code, 'reason:', event.reason)
+        console.log('WebSocket 连接关闭, code:', event.code, 'reason:', event.reason)
         this.stopHeartbeat()
         this.reconnect()
       }
     } catch (error) {
-      console.error('❌ WebSocket 连接失败:', error)
+      console.error('WebSocket 连接失败:', error)
       this.reconnect()
     }
   }
@@ -96,7 +96,7 @@ class WebSocketClient {
     this.heartbeatTimer = setInterval(() => {
       if (this.ws && this.ws.readyState === WebSocket.OPEN) {
         this.send({ type: 'ping' })
-        console.log('💓 发送心跳')
+        console.log('发送心跳')
       }
     }, 30000) // 每30秒发送一次心跳
   }

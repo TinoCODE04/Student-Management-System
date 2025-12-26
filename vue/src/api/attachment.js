@@ -43,3 +43,24 @@ export function downloadAttachment(id) {
     method: 'post'
   })
 }
+
+/**
+ * 搜索课程附件（Elasticsearch全文搜索）
+ */
+export function searchAttachments(params) {
+  return request({
+    url: '/course/attachment/search',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 重建Elasticsearch索引
+ */
+export function rebuildIndex() {
+  return request({
+    url: '/course/attachment/rebuild-index',
+    method: 'post'
+  })
+}

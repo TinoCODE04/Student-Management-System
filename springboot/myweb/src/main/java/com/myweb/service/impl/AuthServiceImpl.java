@@ -50,9 +50,11 @@ public class AuthServiceImpl implements AuthService {
     
     @Override
     public LoginVO login(LoginDTO loginDTO) {
-        // 验证验证码
-        if (!verifyCaptcha(loginDTO.getCaptchaKey(), loginDTO.getCaptcha())) {
-            throw new RuntimeException("验证码错误");
+        // 验证验证码（如果提供了验证码）
+        if (loginDTO.getCaptchaKey() != null && !loginDTO.getCaptchaKey().isEmpty()) {
+            if (!verifyCaptcha(loginDTO.getCaptchaKey(), loginDTO.getCaptcha())) {
+                throw new RuntimeException("验证码错误");
+            }
         }
         
         String username = loginDTO.getUsername();

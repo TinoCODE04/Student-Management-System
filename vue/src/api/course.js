@@ -58,3 +58,12 @@ export function deleteCourse(id) {
     method: 'delete'
   })
 }
+
+// 教师发送课程通知
+export function sendCourseNotification(data) {
+  return request({
+    url: '/course/notify',
+    method: 'post',
+    data
+  })
+}

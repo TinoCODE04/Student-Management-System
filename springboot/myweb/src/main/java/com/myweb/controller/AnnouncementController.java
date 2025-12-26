@@ -39,6 +39,9 @@ public class AnnouncementController {
     @Autowired
     private WebSocketServer webSocketServer;
     
+    @Autowired
+    private com.myweb.service.AnnouncementSearchService announcementSearchService;
+    
     /**
      * 分页查询公告(管理员)
      */
@@ -211,5 +214,43 @@ public class AnnouncementController {
         notification.setUpdateTime(LocalDateTime.now());
         
         notificationService.save(notification);
+    }
+    
+    /**
+     * 搜索公告（Elasticsearch）
+     */
+    @GetMapping("/search")
+    public Result<?> searchAnnouncements(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String targetRole,
+            @RequestParam(required = false) String priority,
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        
+        try {
+            org.springframework.data.domain.Page<com.myweb.document.AnnouncementDocument> page = 
+                announcementSearchService.searchAnnouncements(keyword, targetRole, priority, pageNum, pageSize);
+            return Result.success(page);
+        } catch (Exception e) {
+            return Result.error("搜索失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 重建公告索引（管理员权限）
+     */
+    @PostMapping("/rebuild-index")
+    public Result<?> rebuildAnnouncementIndex(@RequestAttribute(value = "role", required = false) String role) {
+        // 权限检查
+        if (!"admin".equals(role)) {
+            return Result.forbidden("无权限执行此操作");
+        }
+        
+        try {
+            String message = announcementSearchService.rebuildIndex();
+            return Result.success(message);
+        } catch (Exception e) {
+            return Result.error("重建索引失败: " + e.getMessage());
+        }
     }
 }

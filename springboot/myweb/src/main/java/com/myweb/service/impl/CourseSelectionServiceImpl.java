@@ -1,14 +1,17 @@
 package com.myweb.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.myweb.dto.NotificationMessageDTO;
 import com.myweb.entity.Course;
 import com.myweb.entity.CourseSelection;
 import com.myweb.entity.Student;
 import com.myweb.mapper.CourseMapper;
 import com.myweb.mapper.CourseSelectionMapper;
 import com.myweb.service.CourseSelectionService;
+import com.myweb.service.MessageProducerService;
 import com.myweb.service.NotificationService;
 import com.myweb.service.StudentService;
+import com.myweb.websocket.WebSocketServer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,12 @@ public class CourseSelectionServiceImpl extends ServiceImpl<CourseSelectionMappe
     
     @Autowired
     private StudentService studentService;
+    
+    @Autowired
+    private MessageProducerService messageProducerService;
+    
+    @Autowired
+    private WebSocketServer webSocketServer;
     
     @Override
     public List<CourseSelection> listByStudentId(Long studentId) {
@@ -93,7 +102,10 @@ public class CourseSelectionServiceImpl extends ServiceImpl<CourseSelectionMappe
             courseMapper.updateById(course);
             log.info("Course {} selected count updated to {}", courseId, course.getSelectedCount());
             
-            // 发送选课成功通知
+            // 获取学生信息
+            Student student = studentService.getById(studentId);
+            
+            // 1. 发送站内信通知（WebSocket + 数据库）
             log.info("🔔 准备发送选课通知给学生 studentId={}, courseId={}, courseName={}", 
                     studentId, courseId, course.getCourseName());
             try {
@@ -115,6 +127,29 @@ public class CourseSelectionServiceImpl extends ServiceImpl<CourseSelectionMappe
             } catch (Exception e) {
                 log.error("❌ Failed to create notification for student {}: {}", studentId, e.getMessage(), e);
                 // 通知失败不影响选课
+            }
+            
+            // 2. 发送短信通知（RabbitMQ异步处理）
+            if (student != null && student.getPhone() != null) {
+                try {
+                    NotificationMessageDTO smsMessage = new NotificationMessageDTO();
+                    smsMessage.setUserId(studentId);
+                    smsMessage.setUserType("student");
+                    smsMessage.setUserName(student.getName());
+                    smsMessage.setPhone(student.getPhone());
+                    smsMessage.setTitle("选课成功通知");
+                    smsMessage.setContent(String.format("【学生管理系统】您好%s，您已成功选择课程《%s》，上课时间：%s，地点：%s",
+                            student.getName(), course.getCourseName(), 
+                            course.getSchedule() != null ? course.getSchedule() : "待定",
+                            course.getLocation() != null ? course.getLocation() : "待定"));
+                    smsMessage.setRelatedType("selection");
+                    smsMessage.setRelatedId(courseId);
+                    
+                    messageProducerService.sendSmsNotification(smsMessage);
+                    log.info("📱 SMS notification sent to queue for student {}", studentId);
+                } catch (Exception e) {
+                    log.error("Failed to send SMS notification", e);
+                }
             }
         }
         
@@ -150,7 +185,10 @@ public class CourseSelectionServiceImpl extends ServiceImpl<CourseSelectionMappe
                     studentId, courseId, course.getSelectedCount());
             }
             
-            // 发送退课成功通知
+            // 获取学生信息
+            Student student = studentService.getById(studentId);
+            
+            // 1. 发送站内信退课通知
             log.info("🔔 准备发送退课通知给学生 studentId={}, courseId={}, courseName={}", 
                     studentId, courseId, courseName);
             try {
@@ -172,6 +210,27 @@ public class CourseSelectionServiceImpl extends ServiceImpl<CourseSelectionMappe
             } catch (Exception e) {
                 log.error("❌ Failed to create drop notification for student {}: {}", studentId, e.getMessage(), e);
                 // 通知失败不影响退课
+            }
+            
+            // 2. 发送短信通知
+            if (student != null && student.getPhone() != null) {
+                try {
+                    NotificationMessageDTO smsMessage = new NotificationMessageDTO();
+                    smsMessage.setUserId(studentId);
+                    smsMessage.setUserType("student");
+                    smsMessage.setUserName(student.getName());
+                    smsMessage.setPhone(student.getPhone());
+                    smsMessage.setTitle("退课成功通知");
+                    smsMessage.setContent(String.format("【学生管理系统】您好%s，您已成功退选课程《%s》",
+                            student.getName(), courseName));
+                    smsMessage.setRelatedType("drop");
+                    smsMessage.setRelatedId(courseId);
+                    
+                    messageProducerService.sendSmsNotification(smsMessage);
+                    log.info("📱 SMS notification sent to queue for dropped course");
+                } catch (Exception e) {
+                    log.error("Failed to send SMS notification for drop course", e);
+                }
             }
         }
         

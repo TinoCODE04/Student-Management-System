@@ -1,0 +1,12 @@
+D:\Java EE-学生管理系统\student-system-cloud\base-service\src\main\java\com\studentsys\base\service\MajorService.java
+D:\Java EE-学生管理系统\student-system-cloud\base-service\src\main\java\com\studentsys\base\controller\CollegeController.java
+D:\Java EE-学生管理系统\student-system-cloud\base-service\src\main\java\com\studentsys\base\service\impl\MajorServiceImpl.java
+D:\Java EE-学生管理系统\student-system-cloud\base-service\src\main\java\com\studentsys\base\mapper\CollegeMapper.java
+D:\Java EE-学生管理系统\student-system-cloud\base-service\src\main\java\com\studentsys\base\service\impl\CollegeServiceImpl.java
+D:\Java EE-学生管理系统\student-system-cloud\base-service\src\main\java\com\studentsys\base\feign\StudentFeignClient.java
+D:\Java EE-学生管理系统\student-system-cloud\base-service\src\main\java\com\studentsys\base\mapper\MajorMapper.java
+D:\Java EE-学生管理系统\student-system-cloud\base-service\src\main\java\com\studentsys\base\BaseApplication.java
+D:\Java EE-学生管理系统\student-system-cloud\base-service\src\main\java\com\studentsys\base\feign\CourseFeignClient.java
+D:\Java EE-学生管理系统\student-system-cloud\base-service\src\main\java\com\studentsys\base\feign\TeacherFeignClient.java
+D:\Java EE-学生管理系统\student-system-cloud\base-service\src\main\java\com\studentsys\base\controller\MajorController.java
+D:\Java EE-学生管理系统\student-system-cloud\base-service\src\main\java\com\studentsys\base\service\CollegeService.java

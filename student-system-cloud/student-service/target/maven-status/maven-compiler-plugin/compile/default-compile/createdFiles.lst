@@ -1,0 +1,7 @@
+com\studentsys\student\StudentApplication.class
+com\studentsys\student\feign\CollegeFeignClient.class
+com\studentsys\student\controller\StudentController.class
+com\studentsys\student\mapper\StudentMapper.class
+com\studentsys\student\feign\MajorFeignClient.class
+com\studentsys\student\service\StudentService.class
+com\studentsys\student\service\impl\StudentServiceImpl.class

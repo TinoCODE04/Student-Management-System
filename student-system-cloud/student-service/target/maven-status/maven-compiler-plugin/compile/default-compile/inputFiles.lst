@@ -1,0 +1,7 @@
+D:\Java EE-学生管理系统\student-system-cloud\student-service\src\main\java\com\studentsys\student\controller\StudentController.java
+D:\Java EE-学生管理系统\student-system-cloud\student-service\src\main\java\com\studentsys\student\service\StudentService.java
+D:\Java EE-学生管理系统\student-system-cloud\student-service\src\main\java\com\studentsys\student\StudentApplication.java
+D:\Java EE-学生管理系统\student-system-cloud\student-service\src\main\java\com\studentsys\student\feign\MajorFeignClient.java
+D:\Java EE-学生管理系统\student-system-cloud\student-service\src\main\java\com\studentsys\student\feign\CollegeFeignClient.java
+D:\Java EE-学生管理系统\student-system-cloud\student-service\src\main\java\com\studentsys\student\service\impl\StudentServiceImpl.java
+D:\Java EE-学生管理系统\student-system-cloud\student-service\src\main\java\com\studentsys\student\mapper\StudentMapper.java

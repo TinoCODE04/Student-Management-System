@@ -1,0 +1,7 @@
+com\studentsys\auth\service\impl\AuthServiceImpl.class
+com\studentsys\auth\mapper\TeacherMapper.class
+com\studentsys\auth\AuthApplication.class
+com\studentsys\auth\controller\AuthController.class
+com\studentsys\auth\service\AuthService.class
+com\studentsys\auth\config\CaptchaConfig.class
+com\studentsys\auth\mapper\StudentMapper.class

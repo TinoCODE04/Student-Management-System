@@ -1,0 +1,7 @@
+com\studentsys\selection\service\impl\CourseSelectionServiceImpl.class
+com\studentsys\selection\SelectionApplication.class
+com\studentsys\selection\feign\CourseFeignClient.class
+com\studentsys\selection\mapper\CourseSelectionMapper.class
+com\studentsys\selection\service\CourseSelectionService.class
+com\studentsys\selection\feign\StudentFeignClient.class
+com\studentsys\selection\controller\CourseSelectionController.class

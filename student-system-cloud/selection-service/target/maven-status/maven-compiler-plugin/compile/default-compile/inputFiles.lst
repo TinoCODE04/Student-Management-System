@@ -1,0 +1,7 @@
+D:\Java EE-学生管理系统\student-system-cloud\selection-service\src\main\java\com\studentsys\selection\service\impl\CourseSelectionServiceImpl.java
+D:\Java EE-学生管理系统\student-system-cloud\selection-service\src\main\java\com\studentsys\selection\SelectionApplication.java
+D:\Java EE-学生管理系统\student-system-cloud\selection-service\src\main\java\com\studentsys\selection\feign\CourseFeignClient.java
+D:\Java EE-学生管理系统\student-system-cloud\selection-service\src\main\java\com\studentsys\selection\mapper\CourseSelectionMapper.java
+D:\Java EE-学生管理系统\student-system-cloud\selection-service\src\main\java\com\studentsys\selection\controller\CourseSelectionController.java
+D:\Java EE-学生管理系统\student-system-cloud\selection-service\src\main\java\com\studentsys\selection\feign\StudentFeignClient.java
+D:\Java EE-学生管理系统\student-system-cloud\selection-service\src\main\java\com\studentsys\selection\service\CourseSelectionService.java
